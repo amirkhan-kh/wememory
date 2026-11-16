@@ -1,0 +1,68 @@
+This is a copy of a shared ChatGPT chat. It won't be added to memory.
+
+Report conversation
+Tuesday 9:19 AM
+
+Whatsapda green api ni ulab chatlarda xabarlar ochirilsa ham ochmaydigan yoki ochirilgan xabarlarni tiklash imkonini beradigan loyihan qilishim kerak nima maslahat berasan ?
+
+Loyiha tanlovlarim: Platforma: web. Xabarlar: all-media. Maqsad: commercial. Shu asosida Green API bilan to‘liq loyiha arxitekturasi, database, backend va frontend kodini ishlab chiqamiz.
+
+watsapda bu ishlarni qilish uchun boshqa yana qanday yechimlar bor ?
+
+WAMemory bozori: personal. Asosiy ustuvorlik: reliability. Shu asosida eng maqbul WhatsApp API va texnik arxitekturani tanlab ber.
+
+Adapter layer uchun green api va evolution api ni ishlatsam ularga qancha pul ketadi hisobla
+
+Обработка заняла 12s
+
+Menda vps bor uni harajatlarini qoshma green api ni hisobla men masalan bitta mijozdan oyiga shu ochib ketgan xabarlarni korib turishi uchun aytaylik 5$ dan obuna olaman shunda uni harajatlari va biznes modeli qanday bolishini hisobla
+
+Обработка заняла 8s
+
+Boshqa yechimlar yoqmi men mijozlarga watsapda xabar ochib ketsa ham tiklash yoki korish imkonini bermoqchiman shuni oyiga 5$ dan sotaman menga togir yechimlar bilan foyda keltiradigan biznes model qurib ber
+
+mobil ilovasiz asosiy watsapdan chiqmasdan
+
+WAMemory ulanish usuli: qr. Asosiy WhatsApp'dan chiqmasdan va mobil ilovasiz ishlaydigan texnik yechimni ishlab chiqamiz.
+
+Menga texnik yechimlar uchun harajatlarni va eng optimal barqaror va arzon yehcimni ber
+
+Обработка заняла 9s
+
+evolution va baileys ga oxshagan tekin yechimlarni koproq qilish kerak adapter layer qilib watsap uzilishlarisiz ishlasi uchun loyihani turli api yechimlar bilan bir vaqtni ozida almashib ishlay olishini taminlash kerak
+
+Menga watsap tomonidan ruxsatlarni cheklash yoki akkaunt ban muammolari kerak emas shuning uchun bitta vps da ishlayotganda turli akkauntlar uchun turli adapterlar ishaltishi rejasi togrimi ?
+
+Sen muammoga kritik jihatdan qara va barcha vujudga kelish mumkib bolgan risklar, loyihani barqaror ishlashiga tasir qiluvchi omillarni aniqla
+
+Обработка заняла 18s
+
+Men koproq adapter deganimdan maqsad mijozlarni bir servis ishlamasa ikinchisida davom etishi deb bilgan edm agar qayta ulanish kerak bolsa adapter almashtirish uchun unda multi adapter tizimi kerak emas faqat eng ishlaydigan adapterlardan foydalanib mjozlarni malumotlari ochib ketmasligi va barqaror ishalsh ucun yechimlar qilish kerak
+
+Обработка заняла 10s
+
+Endi yuqoridagi chatdagi barcha matnlarn oqib chiqib yakuniy qaror qabul qilamiz , barcha yechimlar , men nima hohlashim, biznes model , loyiha arxitekturasi, barcha vujudga kelishi mumkin bolgan muammolar , risklar inobatga olinishi va ishlaydigan loyiha daromad qiladigan loyha qilsh uchun kerakli barcha narsalarni rejalashtirib olish , hujjatlashtirib olish kerak 
+
+Loyiha cursor ai orqali tayyorlanadi
+
+WAMemory loyihasi uchun boshlang‘ich qarorlarim: VPS CPU: 4vcpu; RAM: 8gb; Disk: 100gb ssd; Bozor: Xalqaro bozor; Xabar saqlash muddati: Mijoz tanlaydi; Dastlabki maqsadli akkauntlar: 50; To‘lov tizimi: Xalqaro karta va to‘lovlar. Shu ma’lumotlar asosida loyiha hujjatini yakuniy texnik topshiriq, aniq arxitektura, xarajatlar, risklar va Cursor AI ishlab chiqish bosqichlariga aylantir.
+
+Обработка заняла 18s
+
+Menga loyiha hujjatlarni koribchiqib qolib ketgan va ochiqlanmagan savollarni ber aniqlab
+
+1 A , 2 B, 3 xa , 4 yoq statuslar kerak emas , 5 yoq, 6 ulanishdan keyingilar, 7 ochirlgan xabarlar mijoz watsapidan ochmasligi kerak boldi , mijoz dashboardga faqat ulanish uchun kiradi yoki ulanish telegram bot orqali boladi ,  8 xabarlar kerak emas hozrcha , 10 xa , 11 faqat 1 ta, 12 2gb, 13 30 kun, 14 7 kun, 15 B, 16 ha yillik boladi ,17 ingliz va rus tilida boladi barcha matnlar, 18 barcha shaxsiy chatlar, 19 qidiruvni barcha kerakli usulda qil , 20 ha export bor , 21 dashboard mobile ham boladi, ulanishlar ham mobile view da bor, 22 bilmadim , 23 ha menimcha shunday, 24 bir mijozga bitta akkaunt,  25 faqat ozi koradi, 26 eng kerakli optimal shifrlah, 27 xa , 28 xa, 29 ubuntu 24.04, 30 fransiya, contabo server, 31 xa , 32 xa, 33 24  soat, 34 faqat tanishlarga tavsiya, 35 telegram support, 36 hali yoq 37 seo ,
+
+Arxivlashni olib tashla , mjoz obuna boladi chatlarida suhbatdoshlar xabar ochirib yuborsa ham xabar ochmasdan mijoz chatdida tursa boldi
+
+WAMemory uchun asosiy talab: Faqat mijozning WhatsApp chatining o‘zida, xabar o‘chmagan kabi. Shu talabni mahsulotning asosiy funksional talabi sifatida qabul qil va texnik amalga oshirish imkoniyatlarini tahlil qil.
+
+Qisqa qilib tushuntir nima qaror va nima yechim va nima muammo ?
+
+Mobile app qilib ios/android qlib tekin api lar orqali watsap anolgiini qilish qancha vaqt oladi ?
+
+2
+
+tekin litsensiya api lari bilan apk ni ishlab chiqaman cursor ai orqali , interfeys watsap bilan deyarli - boladi
+
+A

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAMemory — Owner Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070b10; --accent: #00a884; --bright: #25d366;
+      --text: #e9edef; --muted: #8696a0; --border: rgba(255,255,255,.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: var(--text);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(29,224,196,.18), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(124,108,255,.14), transparent 38%),
+        var(--bg);
+      display: grid; place-items: center; padding: 24px;
+    }
+    .card {
+      width: min(560px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.03));
+      border: 1px solid var(--border); border-radius: 24px; padding: 28px;
+      backdrop-filter: blur(16px); box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; font-weight: 800; color: var(--bright); }
+    .badge {
+      display: inline-block; margin-bottom: 14px; padding: 4px 10px; border-radius: 999px;
+      background: rgba(37,211,102,.15); color: var(--bright); font-size: 12px; font-weight: 700;
+      border: 1px solid rgba(37,211,102,.35);
+    }
+    p, li { color: var(--muted); line-height: 1.5; font-size: 14.5px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    a.btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 18px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 14px;
+    }
+    a.primary { background: var(--accent); color: #fff; box-shadow: 0 8px 24px rgba(0,168,132,.35); }
+    a.ghost { border: 1px solid var(--border); color: var(--text); background: rgba(255,255,255,.04); }
+    .status {
+      margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.25);
+      border: 1px solid var(--border); font-size: 13px; color: var(--muted);
+    }
+    .ok { color: var(--bright); } .err { color: #f0ad4e; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="badge">OWNER DEMO · TEST</div>
+    <h1>WAMemory</h1>
+    <p>WhatsApp message archive — deleted texts stay visible inside WAMemory (Option A).</p>
+    <ol>
+      <li><b>Web app</b> — interactive Flutter UI (demo chats + deleted badge)</li>
+      <li><b>APK</b> — Android install for real Notification Access / WhatsApp test</li>
+      <li><b>API</b> — health check for Contabo backend</li>
+    </ol>
+    <div class="actions">
+      <a class="btn primary" href="/app/">Open web app</a>
+      <a class="btn ghost" id="apk" href="/download/wamemory-test.apk">Download APK</a>
+      <a class="btn ghost" href="/api/health" target="_blank" rel="noopener">API health</a>
+    </div>
+    <div class="status" id="status">Checking…</div>
+  </main>
+  <script>
+    const status = document.getElementById('status');
+    Promise.allSettled([
+      fetch('/api/health').then(r => r.json()),
+      fetch('/download/wamemory-test.apk', { method: 'HEAD' })
+    ]).then(([api, apk]) => {
+      const apiOk = api.status === 'fulfilled' && api.value && api.value.ok;
+      const apkOk = apk.status === 'fulfilled' && apk.value.ok;
+      status.innerHTML =
+        (apiOk ? '<span class="ok">API online</span>' : '<span class="err">API offline</span>') +
+        ' · ' +
+        (apkOk ? '<span class="ok">APK ready</span>' : '<span class="err">APK not uploaded yet</span>');
+    });
+  </script>
+</body>
+</html>

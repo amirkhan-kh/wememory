@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Optional NLS config; service class is declared in AndroidManifest. -->
+<notification-listener-service xmlns:android="http://schemas.android.com/apk/res/android" />

@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+backend/dist/
+
+# Flutter / Android build output
+wamemory/build/
+wamemory/.dart_tool/
+wamemory/.flutter-plugins
+wamemory/.flutter-plugins-dependencies
+wamemory/android/.gradle/
+wamemory/android/local.properties
+wamemory/android/app/.cxx/
+*.iml
+
+# Server secrets — never commit
+deploy/.env
+.env
+
+# Built APK is shipped by rsync, not git (48 MB per build)
+deploy/web/download/*.apk
+
+# Script backups
+*.bak
