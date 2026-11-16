@@ -110,11 +110,23 @@ Postgres **tashqariga ochilmasin** (faqat Docker ichki tarmoq).
 
 ## 6. Yangilash
 
-Kod/APK yangilansa Mac’da:
+Server `~/projects/wamemory` — GitHub repo `amirkhan-kh/wememory` ning `main` branchi (git clone). Kod o‘zgarsa:
+
+```bash
+# Mac
+git push origin main
+
+# Server
+ssh adminamirdev@13.140.202.159
+~/projects/wamemory/scripts/server-update.sh    # git pull + docker compose up -d --build + health
+```
+
+APK git’da yo‘q (48 MB, `.gitignore` da). Yangi APK chiqsa alohida yuboriladi:
 
 ```bash
 ./scripts/build-apk.sh
-./scripts/deploy-contabo.sh root@YOUR_SERVER_IP /opt/wamemory
+rsync -az deploy/web/download/wamemory-test.apk \
+  adminamirdev@13.140.202.159:projects/wamemory/deploy/web/download/
 ```
 
 ## Muammolar
