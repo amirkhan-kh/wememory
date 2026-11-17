@@ -47,4 +47,4 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 5.5 WA profile setup (phone/name/about/photo) + Settings profile screen
 - [x] 5.3b Video/audio full local persist + open/play
 - [x] 5.4 Real-device QR connect + APK retest (APK+LAN Nest; egasi telefonda pairing tasdiqlashi kerak)
-- [~] 5.6 Contabo Evolution + Nest wire + APK Contabo API base
+- [x] 5.6 Contabo Evolution + Nest wire + APK Contabo API base
