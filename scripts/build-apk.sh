@@ -42,11 +42,30 @@ fi
 
 # Prefer debug APK for owner test (faster, no signing hassle); RELEASE=1 for release
 flutter pub get
+
+# Real phone on same Wi‑Fi needs Mac LAN IP (not 10.0.2.2 emulator loopback).
+LAN_IP="${WAMEMORY_LAN_IP:-}"
+if [[ -z "$LAN_IP" ]]; then
+  LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || true)"
+fi
+if [[ -z "$LAN_IP" ]]; then
+  LAN_IP="$(ipconfig getifaddr en1 2>/dev/null || true)"
+fi
+API_BASE="${WAMEMORY_API_BASE:-}"
+if [[ -z "$API_BASE" && -n "$LAN_IP" ]]; then
+  API_BASE="http://${LAN_IP}:3100/api"
+fi
+if [[ -z "$API_BASE" ]]; then
+  API_BASE="http://10.0.2.2:3100/api"
+fi
+echo "WAMEMORY_API_BASE=$API_BASE"
+DART_DEFINES=(--dart-define="WAMEMORY_API_BASE=$API_BASE")
+
 if [[ "${RELEASE:-0}" == "1" ]]; then
-  flutter build apk --release
+  flutter build apk --release "${DART_DEFINES[@]}"
   APK_SRC="$APP/build/app/outputs/flutter-apk/app-release.apk"
 else
-  flutter build apk --debug
+  flutter build apk --debug "${DART_DEFINES[@]}"
   APK_SRC="$APP/build/app/outputs/flutter-apk/app-debug.apk"
 fi
 
@@ -54,10 +73,13 @@ mkdir -p "$OUT_DIR"
 
 # A stub/missing NDK makes the strip task emit empty output and the APK ships
 # without libflutter.so, which crashes on launch. Refuse to publish such an APK.
-if ! unzip -l "$APK_SRC" | grep -q "lib/arm64-v8a/libflutter.so"; then
+# List into a var first — `grep -q` + pipefail + SIGPIPE falsely fails while lib exists.
+_apk_listing="$(unzip -Z1 "$APK_SRC" 2>/dev/null || unzip -l "$APK_SRC")"
+if ! grep -Fq "lib/arm64-v8a/libflutter.so" <<<"$_apk_listing"; then
   echo "ERROR: $APK_SRC has no lib/arm64-v8a/libflutter.so — install a real NDK (sdkmanager 'ndk;27.0.12077973') and rebuild."
   exit 1
 fi
+unset _apk_listing
 
 cp "$APK_SRC" "$OUT_DIR/wamemory-test.apk"
 ls -lh "$OUT_DIR/wamemory-test.apk"

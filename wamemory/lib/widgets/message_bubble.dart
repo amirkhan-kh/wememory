@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../core/models/message.dart';
@@ -11,6 +13,36 @@ class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message});
 
   final Message message;
+
+  static const _channel = MethodChannel('com.wamemory.app/notifications');
+
+  Future<void> _openMedia(BuildContext context) async {
+    final path = message.mediaPath;
+    if (path == null || path.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Media file not saved yet')),
+      );
+      return;
+    }
+    final mime = switch (message.type) {
+      MessageType.image => 'image/*',
+      MessageType.video => 'video/*',
+      MessageType.audio || MessageType.voice => 'audio/*',
+      MessageType.document => '*/*',
+      _ => '*/*',
+    };
+    try {
+      await _channel.invokeMethod<bool>('openMediaFile', {
+        'path': path,
+        'mime': mime,
+      });
+    } on PlatformException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Open failed: ${e.message ?? e.code}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,22 +118,44 @@ class MessageBubble extends StatelessWidget {
                             ],
                           ),
                         ),
-                      if (message.type == MessageType.voice)
-                        _VoicePreview(outgoing: out)
+                      if (message.type == MessageType.voice ||
+                          message.type == MessageType.audio)
+                        _SavedMediaTile(
+                          label: message.type == MessageType.voice
+                              ? 'Voice message'
+                              : (message.body.startsWith('[')
+                                  ? 'Audio'
+                                  : message.body),
+                          icon: WaIcons.play,
+                          path: message.mediaPath,
+                          onOpen: () => _openMedia(context),
+                        )
                       else if (message.type == MessageType.image)
-                        const _MediaPreview(
-                          label: 'Photo',
-                          icon: WaIcons.image,
+                        _ImagePreview(
+                          path: message.mediaPath,
+                          caption: message.body.startsWith('[')
+                              ? null
+                              : message.body,
+                          onOpen: () => _openMedia(context),
                         )
                       else if (message.type == MessageType.video)
-                        const _MediaPreview(
-                          label: 'Video',
+                        _SavedMediaTile(
+                          label: message.body.startsWith('[')
+                              ? 'Video'
+                              : message.body,
                           icon: WaIcons.video,
+                          path: message.mediaPath,
+                          onOpen: () => _openMedia(context),
+                          tall: true,
                         )
                       else if (message.type == MessageType.document)
-                        const _MediaPreview(
-                          label: 'Document',
+                        _SavedMediaTile(
+                          label: message.body.startsWith('[')
+                              ? 'Document'
+                              : message.body,
                           icon: WaIcons.document,
+                          path: message.mediaPath,
+                          onOpen: () => _openMedia(context),
                         )
                       else
                         Text(
@@ -158,61 +212,148 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-class _VoicePreview extends StatelessWidget {
-  const _VoicePreview({required this.outgoing});
-  final bool outgoing;
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({this.path, this.caption, required this.onOpen});
+  final String? path;
+  final String? caption;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    final file = path != null && path!.isNotEmpty ? File(path!) : null;
+    final has = file != null && file.existsSync();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: outgoing ? AppColors.accent : AppColors.accentSoft,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accentBright.withValues(alpha: 0.35),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: const WaIcon(
-            WaIcons.play,
-            size: 18,
-            color: Colors.white,
-            secondaryColor: Colors.white,
+        GestureDetector(
+          onTap: has ? onOpen : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: has
+                ? Image.file(
+                    file,
+                    width: 220,
+                    height: 220,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const _MediaPlaceholder(
+                      label: 'Photo',
+                      icon: WaIcons.image,
+                    ),
+                  )
+                : const _MediaPlaceholder(label: 'Photo', icon: WaIcons.image),
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 28,
-                child: CustomPaint(
-                  painter: _WavePainter(color: AppColors.accentBright),
-                  size: const Size(double.infinity, 28),
-                ),
-              ),
-              const Text(
-                '0:43',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-              ),
-            ],
+        if (caption != null && caption!.trim().isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            caption!,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14.5,
+              height: 1.3,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 }
 
-class _MediaPreview extends StatelessWidget {
-  const _MediaPreview({required this.label, required this.icon});
+class _SavedMediaTile extends StatelessWidget {
+  const _SavedMediaTile({
+    required this.label,
+    required this.icon,
+    required this.onOpen,
+    this.path,
+    this.tall = false,
+  });
+
+  final String label;
+  final WaIcons icon;
+  final String? path;
+  final VoidCallback onOpen;
+  final bool tall;
+
+  @override
+  Widget build(BuildContext context) {
+    final has = path != null && path!.isNotEmpty && File(path!).existsSync();
+    final sizeLabel = () {
+      if (!has) return 'Waiting for file…';
+      try {
+        final bytes = File(path!).lengthSync();
+        if (bytes >= 1024 * 1024) {
+          return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB · saved';
+        }
+        return '${(bytes / 1024).toStringAsFixed(0)} KB · saved';
+      } catch (_) {
+        return 'Saved';
+      }
+    }();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: has ? onOpen : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 220,
+          height: tall ? 140 : 88,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.accent.withValues(alpha: 0.25),
+                ),
+                alignment: Alignment.center,
+                child: WaIcon(icon, size: 22, color: AppColors.accentBright),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      sizeLabel,
+                      style: TextStyle(
+                        color: has
+                            ? AppColors.accentBright
+                            : AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaPlaceholder extends StatelessWidget {
+  const _MediaPlaceholder({required this.label, required this.icon});
   final String label;
   final WaIcons icon;
 
@@ -236,30 +377,4 @@ class _MediaPreview extends StatelessWidget {
       ),
     );
   }
-}
-
-class _WavePainter extends CustomPainter {
-  _WavePainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-    const bars = 28;
-    for (var i = 0; i < bars; i++) {
-      final x = i * (size.width / bars);
-      final h = 6 + (i % 5) * 4.0 + ((i % 3) * 3);
-      canvas.drawLine(
-        Offset(x, size.height / 2 - h / 2),
-        Offset(x, size.height / 2 + h / 2),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -28,3 +28,4 @@ Rules are identical to `AGENTS.md` — read it first; this file adds Claude-spec
 - [ ] Report: `Did` / `Files` / `Check` / `Next`.
 
 One task. Deny-by-default. Caveman chat. No second mobile framework. No TradeFlow leftovers in new docs.
+Evolution path allowed when `docs/STACK.md` says so — never promise ban immunity.

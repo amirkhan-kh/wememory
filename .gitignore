@@ -17,6 +17,8 @@ wamemory/android/app/.cxx/
 
 # Server secrets — never commit
 deploy/.env
+deploy/evolution/.env
+backend/.env
 .env
 
 # Built APK is shipped by rsync, not git (48 MB per build)

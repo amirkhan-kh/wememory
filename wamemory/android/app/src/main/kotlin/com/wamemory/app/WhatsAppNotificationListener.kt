@@ -1,8 +1,9 @@
 package com.wamemory.app
 
 import android.app.Notification
-import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import io.flutter.plugin.common.EventChannel
@@ -19,13 +20,16 @@ class WhatsAppNotificationListener : NotificationListenerService() {
         val pkg = sbn.packageName ?: return
         if (!WHATSAPP_PACKAGES.contains(pkg)) return
 
+        // Group summary rows are not real messages.
+        if ((sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return
+
         val extras: Bundle = sbn.notification.extras ?: return
-        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
-        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim()
-            ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim()
+        val title = resolveTitle(extras) ?: return
+        val bodies = resolveBodies(extras)
+        if (bodies.isEmpty()) return
 
-        if (title.isNullOrEmpty() || text.isNullOrEmpty()) return
-
+        // Prefer the newest MessagingStyle line when present.
+        val text = bodies.last()
         val payload = hashMapOf<String, Any?>(
             "title" to title,
             "body" to text,
@@ -34,24 +38,90 @@ class WhatsAppNotificationListener : NotificationListenerService() {
             "postedAt" to sbn.postTime,
         )
 
-        val lower = text.lowercase()
-        val deleteMarker = lower.contains("this message was deleted") ||
-            lower.contains("удалили это сообщение") ||
-            lower.contains("это сообщение удалено")
+        val deleteMarker = isDeleteMarker(text)
+        dispatch(payload, deleteMarker)
+    }
 
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        // Removal alone is not a reliable delete-for-everyone signal.
+    }
+
+    private fun dispatch(payload: Map<String, Any?>, deleteMarker: Boolean) {
         MainActivity.engineReady?.let { messenger ->
             MethodChannel(messenger, CHANNEL).invokeMethod(
                 if (deleteMarker) "onPossiblyDeleted" else "onWhatsAppNotification",
                 payload,
             )
         } ?: run {
-            // App may be in background — stash for later if needed.
-            pending.add(payload to deleteMarker)
+            // Flutter engine not ready — stash until Dart calls flushPending.
+            synchronized(pending) {
+                pending.add(payload to deleteMarker)
+            }
         }
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
-        // Optional: removal alone is not a reliable delete signal.
+    private fun resolveTitle(extras: Bundle): String? {
+        val conversation = extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)
+            ?.toString()?.trim()
+        if (!conversation.isNullOrEmpty()) return conversation
+
+        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
+        if (!title.isNullOrEmpty()) return title
+
+        val sub = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.trim()
+        if (!sub.isNullOrEmpty()) return sub
+
+        return null
+    }
+
+    private fun resolveBodies(extras: Bundle): List<String> {
+        val fromMessages = extractMessagingStyleTexts(extras)
+        if (fromMessages.isNotEmpty()) return fromMessages
+
+        val candidates = listOfNotNull(
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim(),
+            extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim(),
+            extras.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString()?.trim(),
+        ).filter { it.isNotEmpty() && !isNoise(it) }
+
+        val lines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            ?.mapNotNull { it?.toString()?.trim() }
+            ?.filter { it.isNotEmpty() && !isNoise(it) }
+            .orEmpty()
+
+        if (lines.isNotEmpty()) return lines
+        return candidates
+    }
+
+    private fun extractMessagingStyleTexts(extras: Bundle): List<String> {
+        val raw: Array<Parcelable>? = try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                extras.getParcelableArray(Notification.EXTRA_MESSAGES, Parcelable::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+            }
+        } catch (_: Exception) {
+            null
+        }
+        if (raw == null || raw.isEmpty()) return emptyList()
+
+        val texts = mutableListOf<String>()
+        for (item in raw) {
+            val bundle = item as? Bundle ?: continue
+            val text = bundle.getCharSequence("text")?.toString()?.trim()
+            if (!text.isNullOrEmpty() && !isNoise(text)) {
+                texts.add(text)
+            }
+        }
+        return texts
+    }
+
+    private fun isNoise(text: String): Boolean {
+        val lower = text.lowercase()
+        return lower == "whatsapp" ||
+            lower.startsWith("checking for new messages") ||
+            (lower.contains("new messages") && lower.length < 24)
     }
 
     companion object {
@@ -62,5 +132,18 @@ class WhatsAppNotificationListener : NotificationListenerService() {
         )
         val pending = mutableListOf<Pair<Map<String, Any?>, Boolean>>()
         var eventSink: EventChannel.EventSink? = null
+
+        fun isDeleteMarker(text: String): Boolean {
+            val lower = text.lowercase()
+            return lower.contains("this message was deleted") ||
+                lower.contains("deleted this message") ||
+                lower.contains("удалили это сообщение") ||
+                lower.contains("это сообщение удалено") ||
+                lower.contains("удалил(а) это сообщение") ||
+                lower.contains("bu xabar o'chirildi") ||
+                lower.contains("bu xabar ochirildi") ||
+                lower.contains("xabar o'chirildi") ||
+                lower.contains("xabar ochirildi")
+        }
     }
 }

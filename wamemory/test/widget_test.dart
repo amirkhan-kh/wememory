@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wamemory/core/db/memory_store.dart';
 import 'package:wamemory/core/services/archive_service.dart';
+import 'package:wamemory/core/services/profile_store.dart';
+import 'package:wamemory/core/services/wa_bridge_service.dart';
 import 'package:wamemory/core/theme/app_theme.dart';
 import 'package:wamemory/features/home/home_shell.dart';
 import 'package:wamemory/features/onboarding/onboarding_screen.dart';
@@ -31,6 +33,37 @@ Future<ArchiveService> _readyArchive() async {
   return archive;
 }
 
+Future<ProfileStore> _readyProfile() async {
+  final profile = ProfileStore();
+  await profile.init();
+  return profile;
+}
+
+Future<WaBridgeService> _readyBridge([ArchiveService? archive]) async {
+  final bridge = WaBridgeService(archive: archive);
+  if (archive != null) bridge.attachArchive(archive);
+  await bridge.init();
+  return bridge;
+}
+
+Widget _homeWithProviders(
+  ArchiveService archive,
+  ProfileStore profile,
+  WaBridgeService bridge,
+) {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider.value(value: archive),
+      ChangeNotifierProvider.value(value: profile),
+      ChangeNotifierProvider.value(value: bridge),
+    ],
+    child: MaterialApp(
+      theme: AppTheme.dark,
+      home: const HomeShell(),
+    ),
+  );
+}
+
 Future<void> _pumpFrames(WidgetTester tester, [int frames = 8]) async {
   for (var i = 0; i < frames; i++) {
     await tester.pump(const Duration(milliseconds: 50));
@@ -46,6 +79,7 @@ void main() {
         .setMockMethodCallHandler(_notifChannel, (call) async {
       if (call.method == 'isNotificationAccessEnabled') return false;
       if (call.method == 'openNotificationAccessSettings') return true;
+      if (call.method == 'flushPending') return 0;
       return null;
     });
   });
@@ -107,16 +141,10 @@ void main() {
 
       testWidgets('home shell chats + deleted + settings', (tester) async {
         final archive = await _readyArchive();
+        final profile = await _readyProfile();
+        final bridge = await _readyBridge();
         await tester.pumpWidget(
-          _wrap(
-            ChangeNotifierProvider.value(
-              value: archive,
-              child: MaterialApp(
-                theme: AppTheme.dark,
-                home: const HomeShell(),
-              ),
-            ),
-          ),
+          _wrap(_homeWithProviders(archive, profile, bridge)),
         );
         await _pumpFrames(tester, 12);
 
@@ -125,6 +153,11 @@ void main() {
         expect(find.text('Joanna'), findsWidgets);
         expect(find.text('Alex Rivera'), findsWidgets);
 
+        await tester.tap(find.text('Contacts'));
+        await _pumpFrames(tester, 12);
+        expect(find.text('Contacts'), findsWidgets);
+        expect(find.text('Flor Camden'), findsWidgets);
+
         await tester.tap(find.text('Deleted'));
         await _pumpFrames(tester, 12);
         expect(find.text('Deleted messages'), findsOneWidget);
@@ -132,20 +165,24 @@ void main() {
         await tester.tap(find.text('Settings'));
         await _pumpFrames(tester, 12);
         expect(find.text('Settings'), findsWidgets);
+        expect(find.text('You'), findsOneWidget);
+        expect(find.text('Connect WhatsApp'), findsOneWidget);
+        expect(find.text('WAMemory Premium'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('Notification access'),
+          120,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await _pumpFrames(tester, 4);
+        expect(find.text('Notification access'), findsOneWidget);
       });
 
       testWidgets('open chat thread shows bubbles + deleted badge', (tester) async {
         final archive = await _readyArchive();
+        final profile = await _readyProfile();
+        final bridge = await _readyBridge();
         await tester.pumpWidget(
-          _wrap(
-            ChangeNotifierProvider.value(
-              value: archive,
-              child: MaterialApp(
-                theme: AppTheme.dark,
-                home: const HomeShell(),
-              ),
-            ),
-          ),
+          _wrap(_homeWithProviders(archive, profile, bridge)),
         );
         await _pumpFrames(tester, 12);
         await tester.tap(find.text('Flor Camden'));
@@ -158,14 +195,49 @@ void main() {
       });
 
       testWidgets('WAMemoryApp boots past onboarding into chats', (tester) async {
-        SharedPreferences.setMockInitialValues({'onboarding_done': true});
+        SharedPreferences.setMockInitialValues({
+          'onboarding_done': true,
+          'profile_setup_complete': true,
+        });
         final archive = await _readyArchive();
+        final profile = await _readyProfile();
+        final bridge = await _readyBridge();
         await tester.pumpWidget(
-          _wrap(WAMemoryApp(archive: archive, showOnboarding: false)),
+          _wrap(
+            WAMemoryApp(
+              archive: archive,
+              profile: profile,
+              bridge: bridge,
+              showOnboarding: false,
+            ),
+          ),
         );
         await _pumpFrames(tester, 12);
         expect(find.text('WAMemory'), findsOneWidget);
         expect(find.text('Flor Camden'), findsOneWidget);
+      });
+
+      testWidgets('setup flow asks for phone then name', (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        final archive = await _readyArchive();
+        final profile = await _readyProfile();
+        final bridge = await _readyBridge(archive);
+        await tester.pumpWidget(
+          _wrap(
+            WAMemoryApp(
+              archive: archive,
+              profile: profile,
+              bridge: bridge,
+              showOnboarding: false,
+            ),
+          ),
+        );
+        await _pumpFrames(tester, 12);
+        expect(find.text('Your WhatsApp number'), findsOneWidget);
+        await tester.enterText(find.byType(TextField), '998901234567');
+        await tester.tap(find.text('Next'));
+        await _pumpFrames(tester, 12);
+        expect(find.text('Profile name'), findsOneWidget);
       });
     });
   }

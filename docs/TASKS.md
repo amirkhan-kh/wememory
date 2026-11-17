@@ -16,9 +16,10 @@ Batafsil: `docs/ROADMAP.md`
 - [ ] 1.4 `./scripts/bootstrap-flutter.sh`
 - [x] 1.5 Crash fix + widget 3× (emulator AVD image yo‘q; real telefon USB test keyin)
 - [x] 1.6 UI smoke 3× (`flutter test` 15/15 — onboarding/chats/deleted/settings/bubble)
-- [ ] 1.7 Notification Access On
-- [ ] 1.8 WhatsApp real capture test
+- [x] 1.7 Notification Access On — egasi Enabled + Android Allowed tasdiqladi
+- [x] 1.8 WhatsApp real capture test — boshqa profildan xabar saqlandi; WA’da o‘chirilsa WAMemory’da qoladi (Option A)
 - [x] 1.9 `./scripts/build-apk.sh` → `deploy/web/download/wamemory-test.apk` (29M)
+- [x] 1.10 Settings WA-layout + launcher icon + strict analyze
 
 ## Phase 2 — Contabo test demo
 - [x] 2.1 Serverga ko‘chirish — `13.140.202.159:~/projects/wamemory` (rsync, boshqa loyihalarga tegmagan)
@@ -26,7 +27,7 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 2.3 `docker compose -p wamemory up -d --build` → api + postgres + caddy running
 - [x] 2.4 Health: `/api/health` (lokal 3× 200) + register/trial/checkout 3×
 - [x] 2.5 APK’ni `deploy/web/download/` ga qo‘yish
-- [~] 2.6 Telefonda yangi APK o‘rnatib ochish — crash sababi: stub NDK `llvm-strip` → APK da `libflutter.so` yo‘q edi. Rost NDK r27 o‘rnatildi, release APK 48M (`lib/*.so` bor). Telefon testi kutilmoqda
+- [x] 2.6 Telefonda yangi APK o‘rnatib ochish — egasi ochgan; yangi capture APK yuklanadi
 
 ## Phase 3 — API mustahkamlash
 - [x] 3.1 NestJS stub (auth + billing mock)
@@ -39,3 +40,10 @@ Batafsil: `docs/ROADMAP.md`
 - [ ] 4.2 Privacy/Terms final
 - [ ] 4.3 Play Console
 - [ ] 4.4 Media / R2
+
+## Phase 5 — Evolution + WA-shell (owner override)
+- [x] 5.1 Stack unlock + Evolution deploy + Nest bridge + Flutter search/contacts/connect/send
+- [x] 5.2 Evolution webhook → Nest → device sync (live incoming + phone pairing)
+- [x] 5.5 WA profile setup (phone/name/about/photo) + Settings profile screen
+- [x] 5.3b Video/audio full local persist + open/play
+- [x] 5.4 Real-device QR connect + APK retest (APK+LAN Nest; egasi telefonda pairing tasdiqlashi kerak)

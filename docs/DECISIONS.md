@@ -29,20 +29,26 @@ Holat: MVP — Android birinchi
 | Backend (keyin) | NestJS + PostgreSQL |
 | Media | Local + keyin R2 |
 
-## MVP funksiyalar
-- Shaxsiy chatlar (guruhlar keyinroq)
-- Matn, rasm, video, audio, hujjat, voice message
-- Status / qo‘ng‘iroq YO‘Q
-- Faqat ulanishdan keyingi xabarlar
-- O‘chirilgan xabarlar: chat ichida + Deleted bo‘limi
-- Qidiruv, export
-- Bildirishnoma o‘chirilgan xabar uchun MVP’da YO‘Q
+## MVP funksiyalar (2026-11-17 owner override)
+- WhatsApp-familiar UI: chatlar, kontaktlar, global search, thread + composer
+- Matn yuborish/qabul (Evolution Linked Device orqali)
+- Media (rasm/video/audio/hujjat) — bosqichma-bosqich
+- O‘chirilgan xabarlar: chat ichida + Deleted (WAMemory ichida; WA history’ga qaytarilmaydi)
+- Path A: Notification Access arxiv
+- Path B: Evolution API (Baileys) — egasi tanlovi
+- Status / Calls: UI joyi bo‘lishi mumkin; real VoIP keyinroq
 
 ## Chegaralar (mijozga ochiq aytiladi)
-- Bildirishnoma kelmagan / matni yashirilgan xabarlar kafolatlanmaydi
-- Media alohida mexanizm talab qiladi
-- iOS’da Android kabi notification listen yo‘q
 - Bu WhatsApp rasmiy mahsuloti emas
+- Evolution / Linked Device → akkaunt **ban** xavfi (immunitet yo‘q)
+- Bildirishnoma yashirilgan matn kafolatlanmaydi
+- iOS’da Android kabi notification listen yo‘q
+- Asosiy shaxsiy raqam o‘rniga **test raqam** tavsiya
+
+## Capture usuli
+- **Path A:** Kotlin NotificationListener — pastroq ban risk, faqat kelgan bildirishnomalar
+- **Path B:** Evolution API — QR Linked Device, send/receive/contacts (norasmiy)
+- O‘chirilgan xabarni WhatsApp ichiga qayta yozish — **yo‘q** (Option A display)
 
 ## UI referens
 - WhatsApp Dark Mode — Sarf Pearl (Dribbble)

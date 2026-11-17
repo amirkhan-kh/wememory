@@ -1,5 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../db/app_database.dart';
@@ -26,6 +32,7 @@ class ArchiveService extends ChangeNotifier {
   bool seeded = false;
 
   Future<void> init() async {
+    // Handler must be registered before flushPending delivers stashed events.
     _channel.setMethodCallHandler(_onNativeEvent);
     try {
       await refresh();
@@ -56,6 +63,17 @@ class ArchiveService extends ChangeNotifier {
       listenerEnabled = false;
     } catch (_) {
       listenerEnabled = false;
+    }
+    try {
+      await _channel
+          .invokeMethod<int>('flushPending')
+          .timeout(const Duration(seconds: 2), onTimeout: () => 0);
+    } on MissingPluginException {
+      // Web / desktop / tests without native plugin.
+    } on PlatformException {
+      // ignore
+    } catch (_) {
+      // ignore
     }
     notifyListeners();
   }
@@ -95,6 +113,22 @@ class ArchiveService extends ChangeNotifier {
     }
   }
 
+  /// Call when app returns to foreground (e.g. after Notification Access toggle).
+  Future<void> onAppResumed() async {
+    await refreshListenerStatus();
+    try {
+      await _channel
+          .invokeMethod<int>('flushPending')
+          .timeout(const Duration(seconds: 2), onTimeout: () => 0);
+    } on MissingPluginException {
+      // ignore
+    } on PlatformException {
+      // ignore
+    } catch (_) {
+      // ignore
+    }
+  }
+
   Future<dynamic> _onNativeEvent(MethodCall call) async {
     if (call.method == 'onWhatsAppNotification') {
       final args = Map<String, dynamic>.from(call.arguments as Map);
@@ -115,7 +149,12 @@ class ArchiveService extends ChangeNotifier {
 
     final lower = body.toLowerCase();
     final isDeleteMarker = lower.contains('this message was deleted') ||
+        lower.contains('deleted this message') ||
+        lower.contains('удалили это сообщение') ||
+        lower.contains('это сообщение удалено') ||
         lower.contains('удалено') ||
+        lower.contains("bu xabar o'chirildi") ||
+        lower.contains('bu xabar ochirildi') ||
         lower.contains("o'chirildi") ||
         lower.contains('ochirildi');
 
@@ -332,6 +371,283 @@ class ArchiveService extends ChangeNotifier {
       'body': body,
       'key': _uuid.v4(),
     });
+  }
+
+  /// Live Evolution webhook → Nest sync → local SQLite/memory.
+  Future<void> ingestBridgeMessage({
+    required String remoteJid,
+    required String pushName,
+    required String body,
+    required bool fromMe,
+    required bool isDeleted,
+    required DateTime timestamp,
+    required String notificationKey,
+    String? mediaType,
+    String? mediaMime,
+    String? mediaBase64,
+    String? mediaUrl,
+    String? fileName,
+  }) async {
+    final title = _titleFromJid(remoteJid, pushName, fromMe);
+    final chat = await _ensureChat(title);
+    if (isDeleted) {
+      await _markDeleted(chatId: chat.id, bodyHint: body);
+      if (_useMemory) {
+        final existing = _memory.messages.values
+            .where((m) => m.notificationKey == notificationKey)
+            .toList();
+        for (final m in existing) {
+          _memory.markDeletedById(m.id);
+        }
+      } else {
+        final msgs = await _db.getMessages(chat.id);
+        for (final m in msgs) {
+          if (m.notificationKey == notificationKey && !m.isDeleted) {
+            await _db.markDeletedById(m.id);
+          }
+        }
+      }
+      await refresh();
+      return;
+    }
+
+    final type = _typeFromMedia(mediaType, fileName);
+    String? mediaPath;
+    if (!kIsWeb) {
+      if (mediaBase64 != null && mediaBase64.isNotEmpty) {
+        mediaPath = await _saveMediaFile(
+          notificationKey: notificationKey,
+          base64Data: mediaBase64,
+          fileName: fileName,
+          mediaType: mediaType,
+        );
+      }
+      if ((mediaPath == null || mediaPath.isEmpty) &&
+          mediaUrl != null &&
+          mediaUrl.isNotEmpty) {
+        mediaPath = await _downloadMediaFile(
+          notificationKey: notificationKey,
+          mediaUrl: mediaUrl,
+          fileName: fileName,
+          mediaType: mediaType,
+        );
+      }
+    }
+
+    final existing = await _findByNotificationKey(chat.id, notificationKey);
+    if (existing != null) {
+      if (mediaPath != null &&
+          (existing.mediaPath == null || existing.mediaPath!.isEmpty)) {
+        final updated = existing.copyWith(
+          mediaPath: mediaPath,
+          body: body,
+          type: type,
+        );
+        await _replaceMessage(updated);
+        await _upsertChat(
+          chat.copyWith(lastMessage: body, lastMessageAt: timestamp),
+        );
+        await refresh();
+      }
+      return;
+    }
+
+    final msg = Message(
+      id: notificationKey,
+      chatId: chat.id,
+      sender: fromMe ? 'You' : pushName,
+      body: body,
+      type: type,
+      isOutgoing: fromMe,
+      timestamp: timestamp,
+      notificationKey: notificationKey,
+      mediaPath: mediaPath,
+    );
+    await _insertMessage(msg);
+    await _upsertChat(
+      chat.copyWith(
+        lastMessage: body,
+        lastMessageAt: timestamp,
+        unreadCount: fromMe ? chat.unreadCount : chat.unreadCount + 1,
+      ),
+    );
+    await refresh();
+  }
+
+  MessageType _typeFromMedia(String? mediaType, [String? fileName]) {
+    final name = (fileName ?? '').toLowerCase();
+    switch ((mediaType ?? '').toLowerCase()) {
+      case 'image':
+        return MessageType.image;
+      case 'video':
+        return MessageType.video;
+      case 'audio':
+        if (name.contains('ptt') || name.contains('voice')) {
+          return MessageType.voice;
+        }
+        return MessageType.audio;
+      case 'document':
+        return MessageType.document;
+      default:
+        return MessageType.text;
+    }
+  }
+
+  Future<Message?> _findByNotificationKey(
+    String chatId,
+    String notificationKey,
+  ) async {
+    final msgs = _useMemory
+        ? _memory.messages.values.where((m) => m.chatId == chatId).toList()
+        : await _db.getMessages(chatId);
+    for (final m in msgs) {
+      if (m.notificationKey == notificationKey || m.id == notificationKey) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _replaceMessage(Message message) async {
+    if (_useMemory) {
+      _memory.insertMessage(message);
+    } else {
+      await _db.insertMessage(
+        message,
+      ); // ignore conflict — need update
+      final db = await _db.database;
+      await db.update(
+        'messages',
+        message.toMap(),
+        where: 'id = ?',
+        whereArgs: [message.id],
+      );
+    }
+  }
+
+  Future<Directory> _mediaDir() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final mediaDir = Directory(p.join(dir.path, 'media'));
+    if (!await mediaDir.exists()) await mediaDir.create(recursive: true);
+    return mediaDir;
+  }
+
+  String _extFor({String? fileName, String? mediaType}) {
+    final n = (fileName ?? '').toLowerCase();
+    if (n.contains('.')) return n.split('.').last;
+    switch ((mediaType ?? '').toLowerCase()) {
+      case 'image':
+        return 'jpg';
+      case 'video':
+        return 'mp4';
+      case 'audio':
+        return 'ogg';
+      default:
+        return 'bin';
+    }
+  }
+
+  Future<String?> _saveMediaFile({
+    required String notificationKey,
+    required String base64Data,
+    String? fileName,
+    String? mediaType,
+  }) async {
+    try {
+      var b64 = base64Data.trim();
+      final i = b64.indexOf('base64,');
+      if (i >= 0) b64 = b64.substring(i + 7);
+      final bytes = base64Decode(b64);
+      final mediaDir = await _mediaDir();
+      final safeKey =
+          notificationKey.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final ext = _extFor(fileName: fileName, mediaType: mediaType);
+      final file = File(p.join(mediaDir.path, '$safeKey.$ext'));
+      await file.writeAsBytes(bytes, flush: true);
+      return file.path;
+    } catch (e) {
+      debugPrint('save media failed: $e');
+      return null;
+    }
+  }
+
+  /// Download Nest-persisted media into local archive (video/audio/image).
+  Future<String?> _downloadMediaFile({
+    required String notificationKey,
+    required String mediaUrl,
+    String? fileName,
+    String? mediaType,
+  }) async {
+    try {
+      final uri = Uri.parse(mediaUrl);
+      final res = await http.get(uri).timeout(const Duration(seconds: 90));
+      if (res.statusCode >= 400 || res.bodyBytes.isEmpty) return null;
+      final mediaDir = await _mediaDir();
+      final safeKey =
+          notificationKey.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final ext = _extFor(fileName: fileName, mediaType: mediaType);
+      final file = File(p.join(mediaDir.path, '$safeKey.$ext'));
+      await file.writeAsBytes(res.bodyBytes, flush: true);
+      return file.path;
+    } catch (e) {
+      debugPrint('download media failed: $e');
+      return null;
+    }
+  }
+
+  String _titleFromJid(String remoteJid, String pushName, bool fromMe) {
+    if (!fromMe && pushName.trim().isNotEmpty && pushName != 'You') {
+      return pushName.trim();
+    }
+    final user = remoteJid.split('@').first;
+    final digits = user.replaceAll(RegExp(r'[^\d]'), '');
+    if (digits.length >= 8) return digits;
+    return pushName.trim().isNotEmpty ? pushName.trim() : user;
+  }
+
+  Future<Message> appendOutgoing({
+    required String chatId,
+    required String body,
+    MessageType type = MessageType.text,
+    String? mediaPath,
+  }) async {
+    Chat? chat;
+    for (final c in chats) {
+      if (c.id == chatId) {
+        chat = c;
+        break;
+      }
+    }
+    if (chat == null) {
+      throw StateError('Chat not found: $chatId');
+    }
+    final msg = Message(
+      id: _uuid.v4(),
+      chatId: chat.id,
+      sender: 'You',
+      body: body,
+      type: type,
+      isOutgoing: true,
+      timestamp: DateTime.now(),
+      notificationKey: 'out_${_uuid.v4()}',
+      mediaPath: mediaPath,
+    );
+    await _insertMessage(msg);
+    await _upsertChat(
+      chat.copyWith(
+        lastMessage: body,
+        lastMessageAt: msg.timestamp,
+      ),
+    );
+    await refresh();
+    return msg;
+  }
+
+  Future<List<Message>> searchMessages(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return [];
+    if (_useMemory) return _memory.search(q);
+    return _db.search(q);
   }
 
   Future<void> simulateDelete(String messageId) async {

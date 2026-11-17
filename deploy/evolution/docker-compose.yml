@@ -1,0 +1,61 @@
+# Evolution API + WAMemory Nest proxy on one Docker network (Colima-friendly).
+# Nest talks to Evolution by service name; phone reaches Nest via host :3000.
+services:
+  evolution-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${EVOLUTION_PG_USER:-evolution}
+      POSTGRES_PASSWORD: ${EVOLUTION_PG_PASSWORD:?set EVOLUTION_PG_PASSWORD}
+      POSTGRES_DB: ${EVOLUTION_PG_DB:-evolution}
+    volumes:
+      - evolution_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${EVOLUTION_PG_USER:-evolution}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - evolution
+
+  evolution-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - evolution_redis:/data
+    networks:
+      - evolution
+
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.6
+    restart: unless-stopped
+    depends_on:
+      evolution-postgres:
+        condition: service_healthy
+      evolution-redis:
+        condition: service_started
+    # Published for Colima VM debugging. Mac host→published ports may be empty (Colima quirk).
+    ports:
+      - "${EVOLUTION_PORT:-18080}:8080"
+    env_file:
+      - .env
+    environment:
+      # Nest runs on Mac host :3100 (see backend/.env). Colima: host.docker.internal.
+      WEBHOOK_GLOBAL_URL: ${WEBHOOK_GLOBAL_URL:-http://host.docker.internal:3100/api/evolution/webhook}
+      WEBHOOK_GLOBAL_ENABLED: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - evolution
+
+volumes:
+  evolution_pg:
+  evolution_redis:
+  evolution_instances:
+
+networks:
+  evolution:
+    driver: bridge

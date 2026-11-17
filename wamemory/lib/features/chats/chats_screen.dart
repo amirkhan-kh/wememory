@@ -8,6 +8,7 @@ import '../../widgets/perspective_scroll_list.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
 import '../chat_detail/chat_detail_screen.dart';
+import '../search/search_screen.dart';
 
 class ChatsScreen extends StatefulWidget {
   const ChatsScreen({super.key});
@@ -62,6 +63,16 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           ],
                         ),
                       ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SearchScreen(),
+                          ),
+                        );
+                      },
+                      icon: const WaIcon(WaIcons.search, size: 22),
                     ),
                     IconButton(
                       onPressed: () => _showMenu(context, archive),

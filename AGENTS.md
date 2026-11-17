@@ -5,8 +5,8 @@ Pair: `AGENTS.md` + `CLAUDE.md` (same rules, Claude-specific hands). All other m
 
 ## Project in 5 lines
 
-**WAMemory** — Android-first WhatsApp message archive SaaS. User grants Notification Access; app saves notification text locally; deleted WhatsApp messages stay visible **inside WAMemory** (Option A — never restored into WhatsApp).
-Stack **LOCKED** (`docs/STACK.md`): Flutter + Dart · Kotlin NotificationListener · SQLite (sqflite) · NestJS API · PostgreSQL later · EN + RU.
+**WAMemory** — Android-first WhatsApp-familiar archive + live bridge. Path A: Notification Access → local SQLite. Path B: Evolution API (Linked Device) via NestJS — ban risk, no immunity claim. Deleted copies stay visible **inside WAMemory** (never rewritten into WhatsApp history).
+Stack **REVISED** (`docs/STACK.md`): Flutter + Dart · Kotlin NotificationListener · Evolution API · SQLite · NestJS · EN + RU.
 App: `wamemory/` · API: `backend/` · Preview: `.research/ui-preview/index.html`.
 Tariff: **$5/mo**, 7-day trial, 1 WhatsApp account, ~2 GB media quota (policy in `docs/DECISIONS.md`).
 Checks: Flutter `dart analyze` / `flutter test` when SDK present · `npm run build` in `backend/` · Android checklist `docs/ANDROID_TEST_CHECKLIST.md`.

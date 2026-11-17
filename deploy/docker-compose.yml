@@ -27,6 +27,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
       DATABASE_URL: postgresql://${POSTGRES_USER:-wamemory}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-wamemory}
       NODE_ENV: production
+      EVOLUTION_BASE_URL: ${EVOLUTION_BASE_URL:-http://host.docker.internal:8080}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-}
+      EVOLUTION_INSTANCE: ${EVOLUTION_INSTANCE:-wamemory}
     depends_on:
       postgres:
         condition: service_healthy

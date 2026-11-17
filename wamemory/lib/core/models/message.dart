@@ -29,6 +29,7 @@ class Message {
 
   Message copyWith({
     String? body,
+    MessageType? type,
     bool? isDeleted,
     DateTime? deletedAt,
     String? mediaPath,
@@ -38,7 +39,7 @@ class Message {
       chatId: chatId,
       sender: sender,
       body: body ?? this.body,
-      type: type,
+      type: type ?? this.type,
       isOutgoing: isOutgoing,
       isDeleted: isDeleted ?? this.isDeleted,
       timestamp: timestamp,
