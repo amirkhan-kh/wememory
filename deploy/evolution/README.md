@@ -2,29 +2,37 @@
 
 Unofficial WhatsApp Linked Device bridge. **Account ban risk — no immunity.**
 
-## Local bring-up
+## Contabo (with WAMemory Nest)
+
+```bash
+# Network wamemory_internal must exist (WAMemory stack -p wamemory).
+cd ~/projects/wamemory/deploy/evolution
+cp .env.example .env
+# AUTHENTICATION_API_KEY + EVOLUTION_PG_PASSWORD = strong random
+# EVOLUTION_PORT=18080 (8080 often taken)
+
+docker compose -p wamemory-evo -f docker-compose.yml -f docker-compose.contabo.yml up -d
+
+# Wire Nest deploy/.env:
+#   EVOLUTION_BASE_URL=http://evolution-api:8080
+#   EVOLUTION_API_KEY=<same as AUTHENTICATION_API_KEY>
+cd ~/projects/wamemory/deploy
+docker compose -p wamemory up -d --build api
+```
+
+Phone Connect API: `http://SERVER_IP:8090/api`
+
+## Local (Mac / Colima)
 
 ```bash
 cd deploy/evolution
 cp .env.example .env
-# edit AUTHENTICATION_API_KEY + EVOLUTION_PG_PASSWORD
-docker compose up -d --build
+# WEBHOOK_GLOBAL_URL=http://host.docker.internal:3100/api/evolution/webhook
+docker compose up -d
 ```
 
-This compose runs **Evolution + Nest (`wamemory-api`)** on one network so Colima/Mac port quirks do not break Nest→Evolution calls.
-
-- Nest on Mac host: `:3100` (see `backend/.env`). Emulator → `http://10.0.2.2:3100/api`
-- Real phone (same Wi‑Fi): `http://<Mac-LAN-IP>:3100/api` — `./scripts/build-apk.sh` injects LAN IP
-- Set `CONFIG_SESSION_PHONE_VERSION` (see `.env.example`) or QR/pairing stays empty
+- Nest `:3100`. Emulator `http://10.0.2.2:3100/api`
+- Real phone same Wi‑Fi: `http://<Mac-LAN>:3100/api`
 - Flutter never holds `AUTHENTICATION_API_KEY`
 
-## Connect flow (one number per subscriber)
-
-1. `docker compose up -d --build`
-2. WAMemory → Settings → Connect WhatsApp
-3. Enter WhatsApp number with country code (e.g. `998901234567`)
-4. Tap **Link this number** → pairing code (or QR)
-5. Phone: WhatsApp → Linked devices → Link with phone number → enter code
-6. Live messages: Evolution webhook → Nest store → app sync every 2s
-
-Prefer a **dedicated test number** (ban risk).
+Prefer a **dedicated test number**.

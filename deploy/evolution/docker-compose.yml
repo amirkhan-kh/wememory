@@ -1,5 +1,5 @@
-# Evolution API + WAMemory Nest proxy on one Docker network (Colima-friendly).
-# Nest talks to Evolution by service name; phone reaches Nest via host :3000.
+# Evolution API for WAMemory Path B (local Colima default).
+# Contabo: also use docker-compose.contabo.yml (joins wamemory_internal).
 services:
   evolution-postgres:
     image: postgres:16-alpine
@@ -35,13 +35,11 @@ services:
         condition: service_healthy
       evolution-redis:
         condition: service_started
-    # Published for Colima VM debugging. Mac host→published ports may be empty (Colima quirk).
     ports:
       - "${EVOLUTION_PORT:-18080}:8080"
     env_file:
       - .env
     environment:
-      # Nest runs on Mac host :3100 (see backend/.env). Colima: host.docker.internal.
       WEBHOOK_GLOBAL_URL: ${WEBHOOK_GLOBAL_URL:-http://host.docker.internal:3100/api/evolution/webhook}
       WEBHOOK_GLOBAL_ENABLED: "true"
     extra_hosts:
