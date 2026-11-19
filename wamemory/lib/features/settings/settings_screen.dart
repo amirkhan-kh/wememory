@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_controller.dart';
 import '../../core/services/archive_service.dart';
 import '../../core/services/profile_store.dart';
 import '../../core/services/wa_bridge_service.dart';
@@ -9,6 +11,9 @@ import '../../widgets/avatar_circle.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
 import '../connect/connect_screen.dart';
+import '../help/feedback_screen.dart';
+import '../help/premium_screen.dart';
+import '../help/retention_screen.dart';
 import '../profile/profile_screen.dart';
 
 const _appVersion = '0.1.0';
@@ -81,9 +86,9 @@ class SettingsScreen extends StatelessWidget {
                     title: 'WAMemory Premium',
                     subtitle: '\$5 / month · 7-day trial · 1 WhatsApp account',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Billing comes in the next milestone'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const PremiumScreen(),
                         ),
                       );
                     },
@@ -182,11 +187,11 @@ class SettingsScreen extends StatelessWidget {
                   _Tile(
                     icon: WaIcons.archive,
                     title: 'Retention',
-                    subtitle: '30 / 90 / 365 days — coming next',
+                    subtitle: '30 / 90 / 365 days — saved on device',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Retention controls come in a later milestone'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const RetentionScreen(),
                         ),
                       );
                     },
@@ -207,13 +212,43 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
             ),
-            const _SectionLabel('Language'),
-            const GlassPanel(
+            _SectionLabel(S.of(context).language),
+            GlassPanel(
               radius: 18,
-              child: _Tile(
-                icon: WaIcons.lab,
-                title: 'App language',
-                subtitle: 'English · Русский (full wiring in next milestone)',
+              child: Column(
+                children: [
+                  _Tile(
+                    icon: WaIcons.lab,
+                    title: S.of(context).english,
+                    subtitle: 'English',
+                    trailing: context.watch<LocaleController>().isRu
+                        ? null
+                        : const WaIcon(
+                            WaIcons.check,
+                            size: 20,
+                            color: AppColors.accentBright,
+                          ),
+                    onTap: () => context
+                        .read<LocaleController>()
+                        .setLocale(const Locale('en')),
+                  ),
+                  const Divider(height: 1, color: AppColors.divider),
+                  _Tile(
+                    icon: WaIcons.lab,
+                    title: S.of(context).russian,
+                    subtitle: 'Русский',
+                    trailing: context.watch<LocaleController>().isRu
+                        ? const WaIcon(
+                            WaIcons.check,
+                            size: 20,
+                            color: AppColors.accentBright,
+                          )
+                        : null,
+                    onTap: () => context
+                        .read<LocaleController>()
+                        .setLocale(const Locale('ru')),
+                  ),
+                ],
               ),
             ),
             const _SectionLabel('Help'),
@@ -250,10 +285,17 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   const Divider(height: 1, color: AppColors.divider),
-                  const _Tile(
+                  _Tile(
                     icon: WaIcons.check,
                     title: 'Support',
-                    subtitle: 'Telegram support (channel comes with launch)',
+                    subtitle: 'Send feedback — saved on this device',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const FeedbackScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

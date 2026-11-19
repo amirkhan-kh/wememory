@@ -36,7 +36,7 @@ Batafsil: `docs/ROADMAP.md`
 - [ ] 3.4 Lemon Squeezy / Paddle
 
 ## Phase 4 — Ship
-- [ ] 4.1 EN/RU l10n wiring
+- [x] 4.1 EN/RU l10n wiring (LocaleController + Settings switch)
 - [ ] 4.2 Privacy/Terms final
 - [ ] 4.3 Play Console
 - [ ] 4.4 Media / R2
@@ -48,3 +48,11 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 5.3b Video/audio full local persist + open/play
 - [x] 5.4 Real-device QR connect + APK retest (APK+LAN Nest; egasi telefonda pairing tasdiqlashi kerak)
 - [x] 5.6 Contabo Evolution + Nest wire + APK Contabo API base
+- [x] 5.7 Connect + Save 400 fix (phone validate, Contabo API default, clear errors, APK+API deploy)
+- [x] 5.8 Owner pack: media+send peerPhone · WA UI shell · EN/RU · dead clicks · crash harden · release APK · 5× API
+- [x] 5.9 Crash-proof boot (NLS main-thread) + flutter test 5× + release APK 0.1.1
+- [x] 5.10 Caddy APK download fix (no gzip/SPA fallback; Content-Disposition)
+- [x] 5.11 Search nicknames + gallery Photo Picker + FAB search · APK 0.1.2 · Chrome smoke
+- [x] 5.12 Install AVD system-image android-36 + boot Pixel_7 + install release APK (MainActivity focus, no crash)
+- [x] 5.13 WA shell: Updates/Communities/Calls real screens · Settings dead taps · chat more/call menus · Playwright QR scan · flutter test 28/28 (AVD install deferred: host free_ram ~1.2GB)
+- [x] 5.14 Contabo sync: yangi APK (141M) + code/API deploy · health 200 (`adminamirdev@13.140.202.159`)

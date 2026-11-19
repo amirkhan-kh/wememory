@@ -130,16 +130,29 @@ class ArchiveService extends ChangeNotifier {
   }
 
   Future<dynamic> _onNativeEvent(MethodCall call) async {
-    if (call.method == 'onWhatsAppNotification') {
-      final args = Map<String, dynamic>.from(call.arguments as Map);
-      await _ingestNotification(args);
-    } else if (call.method == 'onPossiblyDeleted') {
-      final args = Map<String, dynamic>.from(call.arguments as Map);
-      final title = (args['title'] as String?) ?? 'Unknown';
-      final chat = await _ensureChat(title);
-      await _markDeleted(chatId: chat.id, bodyHint: (args['body'] as String?) ?? '');
-      await refresh();
+    // Never let a bad notification payload crash the isolate.
+    try {
+      if (call.method == 'onWhatsAppNotification') {
+        final raw = call.arguments;
+        if (raw is! Map) return null;
+        final args = Map<String, dynamic>.from(raw);
+        await _ingestNotification(args);
+      } else if (call.method == 'onPossiblyDeleted') {
+        final raw = call.arguments;
+        if (raw is! Map) return null;
+        final args = Map<String, dynamic>.from(raw);
+        final title = (args['title'] as String?) ?? 'Unknown';
+        final chat = await _ensureChat(title);
+        await _markDeleted(
+          chatId: chat.id,
+          bodyHint: (args['body'] as String?) ?? '',
+        );
+        await refresh();
+      }
+    } catch (e, st) {
+      debugPrint('native event ${call.method} failed: $e\n$st');
     }
+    return null;
   }
 
   Future<void> _ingestNotification(Map<String, dynamic> args) async {
@@ -214,14 +227,42 @@ class ArchiveService extends ChangeNotifier {
     }
   }
 
-  Future<Chat> _ensureChat(String title) async {
+  Future<Chat> _ensureChat(String title, {String? peerPhone}) async {
+    final phone = (peerPhone ?? '').replaceAll(RegExp(r'[^\d]'), '');
+    if (phone.length >= 8) {
+      final byPhone = chats.where((c) => c.peerPhone == phone).toList();
+      if (byPhone.isNotEmpty) {
+        final c = byPhone.first;
+        if (c.title != title && title.isNotEmpty) {
+          final updated = c.copyWith(title: title, peerPhone: phone);
+          await _upsertChat(updated);
+          return updated;
+        }
+        if ((c.peerPhone == null || c.peerPhone!.isEmpty)) {
+          final updated = c.copyWith(peerPhone: phone);
+          await _upsertChat(updated);
+          return updated;
+        }
+        return c;
+      }
+    }
     final existing = chats.where((c) => c.title == title).toList();
-    if (existing.isNotEmpty) return existing.first;
+    if (existing.isNotEmpty) {
+      final c = existing.first;
+      if (phone.length >= 8 &&
+          (c.peerPhone == null || c.peerPhone!.isEmpty)) {
+        final updated = c.copyWith(peerPhone: phone);
+        await _upsertChat(updated);
+        return updated;
+      }
+      return c;
+    }
     final chat = Chat(
-      id: _uuid.v4(),
+      id: phone.length >= 8 ? 'peer_$phone' : _uuid.v4(),
       title: title,
       avatarColor: _colorFor(title),
       createdAt: DateTime.now(),
+      peerPhone: phone.length >= 8 ? phone : null,
     );
     await _upsertChat(chat);
     return chat;
@@ -389,7 +430,8 @@ class ArchiveService extends ChangeNotifier {
     String? fileName,
   }) async {
     final title = _titleFromJid(remoteJid, pushName, fromMe);
-    final chat = await _ensureChat(title);
+    final peer = _peerFromJid(remoteJid);
+    final chat = await _ensureChat(title, peerPhone: peer);
     if (isDeleted) {
       await _markDeleted(chatId: chat.id, bodyHint: body);
       if (_useMemory) {
@@ -599,10 +641,28 @@ class ArchiveService extends ChangeNotifier {
     if (!fromMe && pushName.trim().isNotEmpty && pushName != 'You') {
       return pushName.trim();
     }
-    final user = remoteJid.split('@').first;
-    final digits = user.replaceAll(RegExp(r'[^\d]'), '');
+    final digits = _peerFromJid(remoteJid);
     if (digits.length >= 8) return digits;
+    final user = remoteJid.split('@').first;
     return pushName.trim().isNotEmpty ? pushName.trim() : user;
+  }
+
+  String _peerFromJid(String remoteJid) {
+    final user = remoteJid.split('@').first;
+    // Skip @lid / group keys — only plain phone JIDs.
+    if (remoteJid.contains('@g.us') || remoteJid.contains('@lid')) {
+      final digits = user.replaceAll(RegExp(r'[^\d]'), '');
+      return digits.length >= 8 && digits.length <= 15 ? digits : '';
+    }
+    return user.replaceAll(RegExp(r'[^\d]'), '');
+  }
+
+  /// Open existing chat by peer phone or create one (search → nickname tap).
+  Future<Chat> openOrCreatePeerChat({
+    required String title,
+    String? peerPhone,
+  }) async {
+    return _ensureChat(title, peerPhone: peerPhone);
   }
 
   Future<Message> appendOutgoing({

@@ -7,6 +7,8 @@ class Chat {
   final int unreadCount;
   final bool isGroup;
   final DateTime createdAt;
+  /// Digits-only WhatsApp peer for Evolution send (from remoteJid).
+  final String? peerPhone;
 
   const Chat({
     required this.id,
@@ -17,6 +19,7 @@ class Chat {
     this.unreadCount = 0,
     this.isGroup = false,
     required this.createdAt,
+    this.peerPhone,
   });
 
   Chat copyWith({
@@ -26,6 +29,7 @@ class Chat {
     DateTime? lastMessageAt,
     int? unreadCount,
     bool? isGroup,
+    String? peerPhone,
   }) {
     return Chat(
       id: id,
@@ -36,6 +40,7 @@ class Chat {
       unreadCount: unreadCount ?? this.unreadCount,
       isGroup: isGroup ?? this.isGroup,
       createdAt: createdAt,
+      peerPhone: peerPhone ?? this.peerPhone,
     );
   }
 
@@ -48,6 +53,7 @@ class Chat {
         'unread_count': unreadCount,
         'is_group': isGroup ? 1 : 0,
         'created_at': createdAt.millisecondsSinceEpoch,
+        'peer_phone': peerPhone,
       };
 
   factory Chat.fromMap(Map<String, Object?> map) => Chat(
@@ -60,6 +66,8 @@ class Chat {
             : null,
         unreadCount: (map['unread_count'] as int?) ?? 0,
         isGroup: (map['is_group'] as int?) == 1,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+        createdAt:
+            DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+        peerPhone: map['peer_phone'] as String?,
       );
 }

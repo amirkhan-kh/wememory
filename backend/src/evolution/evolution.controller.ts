@@ -62,7 +62,15 @@ export class EvolutionController {
 
   @Get('contacts')
   async contacts(@Query('phone') phone?: string) {
-    return this.evolution.findContacts(phone);
+    const raw = await this.evolution.findContacts(phone);
+    // Normalize Evolution shapes → { contacts: [...] } for Flutter.
+    if (Array.isArray(raw)) return { contacts: raw };
+    if (raw && typeof raw === 'object') {
+      const o = raw as Record<string, unknown>;
+      if (Array.isArray(o.contacts)) return { contacts: o.contacts };
+      if (Array.isArray(o.data)) return { contacts: o.data };
+    }
+    return { contacts: [] };
   }
 
   /** Real-time device pull (poll every 1–2s while app open). */

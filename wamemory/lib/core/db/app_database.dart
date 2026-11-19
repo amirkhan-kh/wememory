@@ -22,7 +22,7 @@ class AppDatabase {
     final path = p.join(dir.path, 'wamemory.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE chats (
@@ -33,7 +33,8 @@ class AppDatabase {
             last_message_at INTEGER,
             unread_count INTEGER NOT NULL DEFAULT 0,
             is_group INTEGER NOT NULL DEFAULT 0,
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            peer_phone TEXT
           )
         ''');
         await db.execute('''
@@ -61,6 +62,11 @@ class AppDatabase {
         await db.execute(
           'CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_notif_key ON messages(notification_key) WHERE notification_key IS NOT NULL',
         );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE chats ADD COLUMN peer_phone TEXT');
+        }
       },
     );
   }

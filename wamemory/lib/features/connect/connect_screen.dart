@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../core/services/profile_store.dart';
 import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
 
@@ -24,6 +25,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
   final _phoneCtrl = TextEditingController();
   bool _busy = false;
   bool _seeded = false;
+  bool _showAdvanced = false;
   Timer? _poll;
 
   @override
@@ -46,6 +48,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
     super.dispose();
   }
 
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   void _startPoll() {
     _poll?.cancel();
     _poll = Timer.periodic(const Duration(seconds: 3), (_) async {
@@ -55,22 +61,34 @@ class _ConnectScreenState extends State<ConnectScreen> {
         _poll?.cancel();
         _poll = null;
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('WhatsApp linked')),
-        );
+        _toast('WhatsApp linked');
       }
     });
   }
 
   Future<void> _saveUrl() async {
-    await context.read<WaBridgeService>().setBaseUrl(_urlCtrl.text);
+    final url = _urlCtrl.text.trim();
+    if (url.isEmpty || !url.startsWith('http')) {
+      _toast('API URL must start with http:// or https://');
+      return;
+    }
+    await context.read<WaBridgeService>().setBaseUrl(url);
+    if (!mounted) return;
+    _toast('API URL saved');
   }
 
   Future<void> _link() async {
+    final phoneErr = PhoneUtils.validationError(_phoneCtrl.text);
+    if (phoneErr != null) {
+      _toast(phoneErr);
+      return;
+    }
     setState(() => _busy = true);
     final bridge = context.read<WaBridgeService>();
     final profile = context.read<ProfileStore>();
-    await bridge.setBaseUrl(_urlCtrl.text);
+    if (_urlCtrl.text.trim().isNotEmpty) {
+      await bridge.setBaseUrl(_urlCtrl.text);
+    }
     final ok = await bridge.linkPhone(_phoneCtrl.text);
     if (ok) {
       await profile.update(phone: bridge.phone);
@@ -78,16 +96,12 @@ class _ConnectScreenState extends State<ConnectScreen> {
     }
     if (!mounted) return;
     setState(() => _busy = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? (bridge.pairingCode != null
-                  ? 'Pairing code ready — enter it in WhatsApp Linked devices'
-                  : 'Link started — scan QR if shown')
-              : 'Link failed: ${bridge.lastError ?? 'unknown'}',
-        ),
-      ),
+    _toast(
+      ok
+          ? (bridge.pairingCode != null
+              ? 'Pairing code ready — enter it in WhatsApp → Linked devices'
+              : 'Link started — scan QR if shown')
+          : (bridge.lastError ?? 'Link failed'),
     );
   }
 
@@ -148,8 +162,11 @@ class _ConnectScreenState extends State<ConnectScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Country code + number, digits only (e.g. 998901234567). This is the only number linked to this install.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    'Country code + number, digits only (e.g. 998901234567). This links your existing WhatsApp — it does not create a new account.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                   TextField(
                     controller: _phoneCtrl,
@@ -161,27 +178,11 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     decoration: const InputDecoration(
                       hintText: '998901234567',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'API base URL (Nest on same Wi‑Fi)',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Real phone: http://YOUR_MAC_LAN_IP:3100/api — emulator: http://10.0.2.2:3100/api',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  TextField(
-                    controller: _urlCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      hintText: 'http://192.168.x.x:3100/api',
-                      hintStyle: TextStyle(color: AppColors.textSecondary),
+                      prefixText: '+ ',
+                      prefixStyle: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -189,11 +190,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     onPressed: _busy ? null : _link,
                     child: Text(_busy ? 'Linking…' : 'Link this number'),
                   ),
-                  TextButton(
-                    onPressed: _busy ? null : _saveUrl,
-                    child: const Text('Save API URL only'),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     'State: ${bridge.connectionState}'
                     '${bridge.instanceName != null ? ' · ${bridge.instanceName}' : ''}'
@@ -206,8 +203,55 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            if (bridge.pairingCode != null)
+            const SizedBox(height: 8),
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: _showAdvanced,
+                onExpansionChanged: (v) => setState(() => _showAdvanced = v),
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                title: const Text(
+                  'Advanced (API URL)',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                children: [
+                  GlassPanel(
+                    radius: 16,
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Only change this if Contabo default fails. Do not paste API keys here.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        TextField(
+                          controller: _urlCtrl,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            hintText: 'http://13.140.202.159:8090/api',
+                            hintStyle: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _busy ? null : _saveUrl,
+                          child: const Text('Save API URL only'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (bridge.pairingCode != null) ...[
+              const SizedBox(height: 8),
               GlassPanel(
                 radius: 16,
                 padding: const EdgeInsets.all(20),
@@ -243,9 +287,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           ClipboardData(text: bridge.pairingCode!),
                         );
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Code copied')),
-                        );
+                        _toast('Code copied');
                       },
                       child: const Text('Copy code'),
                     ),
@@ -256,6 +298,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                   ],
                 ),
               ),
+            ],
             if (bridge.qrBase64 != null) ...[
               const SizedBox(height: 16),
               GlassPanel(
@@ -306,7 +349,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
               child: Text(
                 bridge.isLinked
                     ? 'Linked. Live sync every 2s (webhook → Nest → app).'
-                    : 'Phone + Mac must be on the same Wi‑Fi. Nest must be running on :3100. Prefer a test WhatsApp number.',
+                    : 'Default API: Contabo. After Link, open WhatsApp → Linked devices and enter the code (or scan QR). Prefer a test number.',
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,

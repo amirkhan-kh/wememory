@@ -3,43 +3,53 @@ package com.wamemory.app
 import android.app.Notification
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import io.flutter.plugin.common.EventChannel
+import android.util.Log
 import io.flutter.plugin.common.MethodChannel
 
 /**
  * Captures WhatsApp notification payloads and forwards them to Flutter.
  * Only text available in the notification shade can be archived.
+ *
+ * IMPORTANT: NotificationListener callbacks run on a binder thread.
+ * Flutter MethodChannel must be invoked on the main looper or the process dies.
  */
 class WhatsAppNotificationListener : NotificationListenerService() {
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        if (sbn == null) return
-        val pkg = sbn.packageName ?: return
-        if (!WHATSAPP_PACKAGES.contains(pkg)) return
+        try {
+            if (sbn == null) return
+            val pkg = sbn.packageName ?: return
+            if (!WHATSAPP_PACKAGES.contains(pkg)) return
 
-        // Group summary rows are not real messages.
-        if ((sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return
+            // Group summary rows are not real messages.
+            if ((sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return
 
-        val extras: Bundle = sbn.notification.extras ?: return
-        val title = resolveTitle(extras) ?: return
-        val bodies = resolveBodies(extras)
-        if (bodies.isEmpty()) return
+            val extras: Bundle = sbn.notification.extras ?: return
+            val title = resolveTitle(extras) ?: return
+            val bodies = resolveBodies(extras)
+            if (bodies.isEmpty()) return
 
-        // Prefer the newest MessagingStyle line when present.
-        val text = bodies.last()
-        val payload = hashMapOf<String, Any?>(
-            "title" to title,
-            "body" to text,
-            "key" to sbn.key,
-            "package" to pkg,
-            "postedAt" to sbn.postTime,
-        )
+            val text = bodies.last()
+            val payload = hashMapOf<String, Any?>(
+                "title" to title,
+                "body" to text,
+                "key" to sbn.key,
+                "package" to pkg,
+                "postedAt" to sbn.postTime,
+            )
 
-        val deleteMarker = isDeleteMarker(text)
-        dispatch(payload, deleteMarker)
+            val deleteMarker = isDeleteMarker(text)
+            dispatch(payload, deleteMarker)
+        } catch (e: Exception) {
+            Log.w(TAG, "onNotificationPosted failed: ${e.message}")
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -47,15 +57,37 @@ class WhatsAppNotificationListener : NotificationListenerService() {
     }
 
     private fun dispatch(payload: Map<String, Any?>, deleteMarker: Boolean) {
-        MainActivity.engineReady?.let { messenger ->
-            MethodChannel(messenger, CHANNEL).invokeMethod(
-                if (deleteMarker) "onPossiblyDeleted" else "onWhatsAppNotification",
-                payload,
-            )
-        } ?: run {
-            // Flutter engine not ready — stash until Dart calls flushPending.
+        val messenger = MainActivity.engineReady
+        if (messenger == null) {
             synchronized(pending) {
+                if (pending.size >= MAX_PENDING) {
+                    pending.removeAt(0)
+                }
                 pending.add(payload to deleteMarker)
+            }
+            return
+        }
+
+        // Binder thread → main looper before touching Flutter.
+        mainHandler.post {
+            try {
+                val live = MainActivity.engineReady ?: run {
+                    synchronized(pending) {
+                        if (pending.size >= MAX_PENDING) pending.removeAt(0)
+                        pending.add(payload to deleteMarker)
+                    }
+                    return@post
+                }
+                MethodChannel(live, CHANNEL).invokeMethod(
+                    if (deleteMarker) "onPossiblyDeleted" else "onWhatsAppNotification",
+                    payload,
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Flutter dispatch failed: ${e.message}")
+                synchronized(pending) {
+                    if (pending.size >= MAX_PENDING) pending.removeAt(0)
+                    pending.add(payload to deleteMarker)
+                }
             }
         }
     }
@@ -125,13 +157,14 @@ class WhatsAppNotificationListener : NotificationListenerService() {
     }
 
     companion object {
+        private const val TAG = "WAMemoryNLS"
+        private const val MAX_PENDING = 200
         const val CHANNEL = "com.wamemory.app/notifications"
         val WHATSAPP_PACKAGES = setOf(
             "com.whatsapp",
             "com.whatsapp.w4b",
         )
         val pending = mutableListOf<Pair<Map<String, Any?>, Boolean>>()
-        var eventSink: EventChannel.EventSink? = null
 
         fun isDeleteMarker(text: String): Boolean {
             val lower = text.lowercase()

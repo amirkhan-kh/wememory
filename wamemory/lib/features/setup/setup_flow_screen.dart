@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/services/profile_store.dart';
 import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
@@ -56,15 +58,13 @@ class _SetupFlowScreenState extends State<SetupFlowScreen> {
     final bridge = context.read<WaBridgeService>();
 
     if (_index == 0) {
-      final digits = _phoneCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
-      if (digits.length < 8) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Enter WhatsApp number with country code'),
-          ),
-        );
+      final err = PhoneUtils.validationError(_phoneCtrl.text);
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
         return;
       }
+      final digits = PhoneUtils.normalize(_phoneCtrl.text);
+      // Local only — live WhatsApp link happens in Settings → Connect.
       await profile.update(phone: digits);
       await bridge.setPhone(digits);
     } else if (_index == 1) {
@@ -94,6 +94,17 @@ class _SetupFlowScreenState extends State<SetupFlowScreen> {
   }
 
   Future<void> _pickPhoto() async {
+    final photos = await Permission.photos.request();
+    final ok = photos.isGranted ||
+        photos.isLimited ||
+        (await Permission.storage.request()).isGranted;
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Allow Photos to pick a profile picture')),
+      );
+      return;
+    }
     final profile = context.read<ProfileStore>();
     setState(() => _busy = true);
     try {
@@ -101,6 +112,11 @@ class _SetupFlowScreenState extends State<SetupFlowScreen> {
       if (path != null && path.isNotEmpty) {
         await profile.update(photoPath: path);
       }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Photo failed: ${e.message ?? e.code}')),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -193,7 +209,7 @@ class _PhoneStep extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Text(
-            'One number per account. Used for Connect / Linked Device (ban risk — prefer a test number).',
+            'Saved on this phone only. Live WhatsApp link is Settings → Connect (ban risk — prefer a test number).',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),

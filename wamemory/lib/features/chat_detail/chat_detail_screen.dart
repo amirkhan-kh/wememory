@@ -5,15 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/l10n/app_strings.dart';
 import '../../core/models/chat.dart';
 import '../../core/models/message.dart';
 import '../../core/services/archive_service.dart';
 import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/message_bubble.dart';
-import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
+import '../calls/calls_screen.dart';
+import '../connect/connect_screen.dart';
+import '../search/search_screen.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({super.key, required this.chat});
@@ -29,10 +33,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   List<Message> _messages = [];
   bool _loading = true;
   bool _sendingMedia = false;
+  ArchiveService? _archive;
 
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final archive = context.read<ArchiveService>();
+    if (!identical(_archive, archive)) {
+      _archive?.removeListener(_onArchiveChanged);
+      _archive = archive;
+      _archive!.addListener(_onArchiveChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _archive?.removeListener(_onArchiveChanged);
+    super.dispose();
+  }
+
+  void _onArchiveChanged() {
+    if (!mounted) return;
     _load();
   }
 
@@ -46,31 +73,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
   }
 
-  String? _digitsFromTitle(String title) {
-    final d = title.replaceAll(RegExp(r'[^\d]'), '');
-    return d.length >= 8 ? d : null;
-  }
-
   Future<String?> _resolveNumber() async {
-    var number = _digitsFromTitle(widget.chat.title);
-    if (number != null) return number;
+    final peer = PhoneUtils.normalize(widget.chat.peerPhone);
+    if (PhoneUtils.isValid(peer)) return peer;
+    final fromTitle = PhoneUtils.normalize(widget.chat.title);
+    if (PhoneUtils.isValid(fromTitle)) return fromTitle;
     return _askNumber();
   }
 
   Future<void> _handleSend(String text) async {
     final archive = context.read<ArchiveService>();
     final bridge = context.read<WaBridgeService>();
+    final s = S.of(context);
     await archive.appendOutgoing(chatId: widget.chat.id, body: text);
     await _load();
 
     if (!bridge.isLinked) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Saved locally. Link WhatsApp in Settings → Connect to send live.',
-          ),
-        ),
+        SnackBar(content: Text(s.linkToSend)),
       );
       return;
     }
@@ -82,9 +103,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          ok
-              ? 'Sent via Evolution'
-              : 'Send failed: ${bridge.lastError ?? 'unknown'}',
+          ok ? s.sentLive : 'Send failed: ${bridge.lastError ?? 'unknown'}',
         ),
       ),
     );
@@ -166,9 +185,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (!bridge.isLinked) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Saved locally. Link WhatsApp to send live.'),
-          ),
+          SnackBar(content: Text(S.of(context).linkToSend)),
         );
         return;
       }
@@ -188,7 +205,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         SnackBar(
           content: Text(
             ok
-                ? 'Media sent via Evolution'
+                ? S.of(context).mediaSent
                 : 'Media send failed: ${bridge.lastError ?? 'unknown'}',
           ),
         ),
@@ -201,6 +218,124 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     } finally {
       if (mounted) setState(() => _sendingMedia = false);
     }
+  }
+
+  void _showChatMenu(S s) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.panel,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const WaIcon(WaIcons.info, size: 22),
+              title: Text(s.viewContact),
+              subtitle: Text(
+                (widget.chat.peerPhone == null ||
+                        widget.chat.peerPhone!.isEmpty)
+                    ? widget.chat.title
+                    : '+${widget.chat.peerPhone}',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                showDialog<void>(
+                  context: context,
+                  builder: (d) => AlertDialog(
+                    backgroundColor: AppColors.panel,
+                    title: Text(widget.chat.title),
+                    content: Text(
+                      (widget.chat.peerPhone == null ||
+                              widget.chat.peerPhone!.isEmpty)
+                          ? 'Local archive contact · link WhatsApp to send live.'
+                          : 'Phone +${widget.chat.peerPhone}\n\n'
+                              'Deleted copies stay in WAMemory. Nothing is written back into WhatsApp.',
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(d),
+                        child: Text(s.ok),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(d);
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const ConnectScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text('Connect'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const WaIcon(WaIcons.search, size: 22),
+              title: Text(s.searchInChat),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SearchScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const WaIcon(WaIcons.image, size: 22),
+              title: Text(s.mediaLinksDocs),
+              onTap: () {
+                Navigator.pop(ctx);
+                final media = _messages
+                    .where((m) => (m.mediaPath ?? '').isNotEmpty)
+                    .length;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      media == 0
+                          ? 'No saved media in this thread yet'
+                          : '$media media item(s) saved in this thread',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const WaIcon(WaIcons.notify, size: 22),
+              title: Text(s.muteNotifications),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Mute is local UI only — use Android notification settings for WhatsApp.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const WaIcon(WaIcons.lab, size: 22),
+              title: Text(s.wallpaper),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(s.comingSoon)),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<String?> _askNumber() async {
@@ -237,82 +372,99 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SurrealBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: AppColors.appBar.withValues(alpha: 0.72),
-          titleSpacing: 0,
-          title: Row(
-            children: [
-              AvatarCircle(
-                name: widget.chat.title,
-                colorHex: widget.chat.avatarColor,
-                size: 36,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.chat.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      context.watch<WaBridgeService>().isLinked
-                          ? 'Linked · Evolution'
-                          : 'Archive · local',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: const [
-            WaIcon(WaIcons.video, size: 22),
-            SizedBox(width: 14),
-            WaIcon(WaIcons.call, size: 22),
-            SizedBox(width: 14),
-            WaIcon(WaIcons.more, size: 22),
-            SizedBox(width: 8),
-          ],
-        ),
-        body: Column(
+    final s = S.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.bgDeep,
+      appBar: AppBar(
+        backgroundColor: AppColors.appBar,
+        titleSpacing: 0,
+        title: Row(
           children: [
-            Expanded(
-              child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.accent),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, i) =>
-                          MessageBubble(message: _messages[i]),
-                    ),
+            AvatarCircle(
+              name: widget.chat.title,
+              colorHex: widget.chat.avatarColor,
+              size: 36,
             ),
-            if (_sendingMedia)
-              const LinearProgressIndicator(
-                minHeight: 2,
-                color: AppColors.accent,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.chat.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    context.watch<WaBridgeService>().isLinked
+                        ? 'online'
+                        : 'tap to link WhatsApp',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-            _ComposerBar(
-              onSend: (text) => _handleSend(text),
-              onAttachPhoto: () => _handlePickMedia(mime: 'image/*'),
-              onAttachVideo: () => _handlePickMedia(mime: 'video/*'),
-              onAttachFile: () => _handlePickMedia(mime: '*/*'),
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: s.videoCallFromChat,
+            onPressed: () => CallsScreen.startCallFromChat(
+              context: context,
+              chat: widget.chat,
+              video: true,
+            ),
+            icon: const WaIcon(WaIcons.video, size: 22),
+          ),
+          IconButton(
+            tooltip: s.callFromChat,
+            onPressed: () => CallsScreen.startCallFromChat(
+              context: context,
+              chat: widget.chat,
+              video: false,
+            ),
+            icon: const WaIcon(WaIcons.call, size: 22),
+          ),
+          IconButton(
+            tooltip: s.more,
+            onPressed: () => _showChatMenu(s),
+            icon: const WaIcon(WaIcons.more, size: 22),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.accent),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, i) =>
+                        MessageBubble(message: _messages[i]),
+                  ),
+          ),
+          if (_sendingMedia)
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: AppColors.accent,
+            ),
+          _ComposerBar(
+            onSend: (text) => _handleSend(text),
+            onAttachPhoto: () => _handlePickMedia(mime: 'image/*'),
+            onAttachVideo: () => _handlePickMedia(mime: 'video/*'),
+            onAttachAudio: () => _handlePickMedia(mime: 'audio/*'),
+            onAttachFile: () => _handlePickMedia(mime: '*/*'),
+          ),
+        ],
       ),
     );
   }
@@ -323,11 +475,13 @@ class _ComposerBar extends StatefulWidget {
     required this.onSend,
     required this.onAttachPhoto,
     required this.onAttachVideo,
+    required this.onAttachAudio,
     required this.onAttachFile,
   });
   final ValueChanged<String> onSend;
   final VoidCallback onAttachPhoto;
   final VoidCallback onAttachVideo;
+  final VoidCallback onAttachAudio;
   final VoidCallback onAttachFile;
 
   @override
@@ -356,7 +510,7 @@ class _ComposerBarState extends State<_ComposerBar> {
           children: [
             ListTile(
               leading: const WaIcon(WaIcons.image, size: 22),
-              title: const Text('Photo'),
+              title: Text(S.of(ctx).photo),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onAttachPhoto();
@@ -364,15 +518,23 @@ class _ComposerBarState extends State<_ComposerBar> {
             ),
             ListTile(
               leading: const WaIcon(WaIcons.video, size: 22),
-              title: const Text('Video'),
+              title: Text(S.of(ctx).video),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onAttachVideo();
               },
             ),
             ListTile(
+              leading: const WaIcon(WaIcons.play, size: 22),
+              title: Text(S.of(ctx).audio),
+              onTap: () {
+                Navigator.pop(ctx);
+                widget.onAttachAudio();
+              },
+            ),
+            ListTile(
               leading: const WaIcon(WaIcons.document, size: 22),
-              title: const Text('Document'),
+              title: Text(S.of(ctx).document),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onAttachFile();
@@ -413,8 +575,8 @@ class _ComposerBarState extends State<_ComposerBar> {
                       child: TextField(
                         controller: _controller,
                         style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(
-                          hintText: 'Type here',
+                        decoration: InputDecoration(
+                          hintText: S.of(context).typeHere,
                           border: InputBorder.none,
                           filled: false,
                         ),

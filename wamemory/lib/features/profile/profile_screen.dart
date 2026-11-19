@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/services/profile_store.dart';
 import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
@@ -21,12 +23,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const _channel = MethodChannel('com.wamemory.app/notifications');
   bool _busy = false;
 
+  Future<bool> _ensurePhotosPermission() async {
+    final photos = await Permission.photos.request();
+    if (photos.isGranted || photos.isLimited) return true;
+    final storage = await Permission.storage.request();
+    if (storage.isGranted) return true;
+    if (!mounted) return false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Allow Photos access to set profile picture'),
+      ),
+    );
+    return false;
+  }
+
   Future<void> _pickPhoto(ProfileStore profile) async {
+    if (!await _ensurePhotosPermission()) return;
     setState(() => _busy = true);
     try {
       final path = await _channel.invokeMethod<String?>('pickProfileImage');
       if (path != null && path.isNotEmpty) {
         await profile.update(photoPath: path);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile photo saved')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No photo selected')),
+        );
       }
     } on PlatformException catch (e) {
       if (!mounted) return;
@@ -88,7 +113,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
-    if (ok == true) await onSave(ctrl.text);
+    if (ok == true) {
+      try {
+        await onSave(ctrl.text);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
+    }
     ctrl.dispose();
   }
 
@@ -193,11 +227,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       initial: phone,
                       maxLines: 1,
                       onSave: (v) async {
-                        await profile.update(phone: v);
-                        final digits = v.replaceAll(RegExp(r'[^\d]'), '');
-                        if (digits.length >= 8) {
-                          await bridge.setPhone(digits);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final err = PhoneUtils.validationError(v);
+                        if (err != null) {
+                          messenger.showSnackBar(SnackBar(content: Text(err)));
+                          return;
                         }
+                        final digits = PhoneUtils.normalize(v);
+                        await profile.update(phone: digits);
+                        await bridge.setPhone(digits);
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Phone saved locally. Use Settings → Connect WhatsApp to link.',
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ),

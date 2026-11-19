@@ -5,7 +5,37 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/phone_utils.dart';
 import 'archive_service.dart';
+
+class WaContact {
+  WaContact({
+    required this.id,
+    required this.displayName,
+    required this.pushName,
+    required this.phone,
+  });
+
+  final String id;
+  final String displayName;
+  final String pushName;
+  final String phone;
+
+  factory WaContact.fromJson(Map<String, dynamic> j) {
+    final id = '${j['id'] ?? j['remoteJid'] ?? j['jid'] ?? ''}';
+    final phone = PhoneUtils.normalize(
+      '${j['number'] ?? j['phone'] ?? id.split('@').first}',
+    );
+    final push = '${j['pushName'] ?? j['notify'] ?? ''}'.trim();
+    final name = '${j['name'] ?? j['verifiedName'] ?? push}'.trim();
+    return WaContact(
+      id: id.isEmpty ? phone : id,
+      displayName: name.isNotEmpty ? name : (push.isNotEmpty ? push : phone),
+      pushName: push,
+      phone: phone,
+    );
+  }
+}
 
 class BridgeSyncMessage {
   BridgeSyncMessage({
@@ -75,11 +105,11 @@ class WaBridgeService extends ChangeNotifier {
   static const _keyBase = 'wa_bridge_base_url';
   static const _keyPhone = 'wa_bridge_phone';
   static const _keySeq = 'wa_bridge_sync_seq';
-  /// Override at build: `--dart-define=WAMEMORY_API_BASE=http://LAN:3100/api`
-  /// Emulator default: `10.0.2.2`. Real phone: Mac/LAN IP or Contabo `/api`.
+  /// Override at build: `--dart-define=WAMEMORY_API_BASE=…`
+  /// Contabo test demo is the shareable default; local/emulator overrides via define.
   static const defaultBaseUrl = String.fromEnvironment(
     'WAMEMORY_API_BASE',
-    defaultValue: 'http://10.0.2.2:3100/api',
+    defaultValue: 'http://13.140.202.159:8090/api',
   );
 
   final SharedPreferences? _prefsOverride;
@@ -106,7 +136,13 @@ class WaBridgeService extends ChangeNotifier {
 
   Future<void> init() async {
     _prefs = _prefsOverride ?? await SharedPreferences.getInstance();
-    baseUrl = _prefs!.getString(_keyBase) ?? defaultBaseUrl;
+    var stored = _prefs!.getString(_keyBase) ?? defaultBaseUrl;
+    // Old APKs baked emulator loopback — real phones cannot reach 10.0.2.2.
+    if (stored.contains('10.0.2.2')) {
+      stored = defaultBaseUrl;
+      await _prefs!.setString(_keyBase, stored);
+    }
+    baseUrl = stored;
     phone = _prefs!.getString(_keyPhone) ?? '';
     syncSeq = _prefs!.getInt(_keySeq) ?? 0;
     notifyListeners();
@@ -126,7 +162,7 @@ class WaBridgeService extends ChangeNotifier {
   }
 
   Future<void> setPhone(String raw) async {
-    phone = raw.replaceAll(RegExp(r'[^\d]'), '');
+    phone = PhoneUtils.normalize(raw);
     final prefs = _prefs ?? await SharedPreferences.getInstance();
     _prefs = prefs;
     await prefs.setString(_keyPhone, phone);
@@ -139,22 +175,41 @@ class WaBridgeService extends ChangeNotifier {
     return Uri.parse('$root$p').replace(queryParameters: query);
   }
 
+  /// Nest / Evolution error body → short user text (no Exception dump).
+  static String parseApiError(int status, String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        final msg = decoded['message'];
+        if (msg is String && msg.trim().isNotEmpty) return msg.trim();
+        if (msg is List && msg.isNotEmpty) {
+          return msg.map((e) => '$e').where((s) => s.isNotEmpty).join('; ');
+        }
+      }
+    } catch (_) {
+      // fall through
+    }
+    final trimmed = body.trim();
+    if (trimmed.isNotEmpty && trimmed.length < 180) return trimmed;
+    return 'Request failed ($status)';
+  }
+
   Future<Map<String, dynamic>?> _get(
     String path, [
     Map<String, String>? query,
   ]) async {
     try {
       final res =
-          await _client.get(_u(path, query)).timeout(const Duration(seconds: 8));
+          await _client.get(_u(path, query)).timeout(const Duration(seconds: 12));
       if (res.statusCode >= 400) {
-        lastError = 'HTTP ${res.statusCode}';
+        lastError = parseApiError(res.statusCode, res.body);
         notifyListeners();
         return null;
       }
       lastError = null;
       return jsonDecode(res.body) as Map<String, dynamic>;
     } catch (e) {
-      lastError = e.toString();
+      lastError = 'Cannot reach API ($baseUrl). Check Wi‑Fi / Contabo.';
       notifyListeners();
       return null;
     }
@@ -163,7 +218,7 @@ class WaBridgeService extends ChangeNotifier {
   Future<Map<String, dynamic>?> _post(
     String path,
     Map<String, dynamic> body, {
-    Duration timeout = const Duration(seconds: 20),
+    Duration timeout = const Duration(seconds: 45),
   }) async {
     try {
       final res = await _client
@@ -174,7 +229,7 @@ class WaBridgeService extends ChangeNotifier {
           )
           .timeout(timeout);
       if (res.statusCode >= 400) {
-        lastError = 'HTTP ${res.statusCode}: ${res.body}';
+        lastError = parseApiError(res.statusCode, res.body);
         notifyListeners();
         return null;
       }
@@ -183,7 +238,7 @@ class WaBridgeService extends ChangeNotifier {
       if (decoded is Map<String, dynamic>) return decoded;
       return {'data': decoded};
     } catch (e) {
-      lastError = e.toString();
+      lastError = 'Cannot reach API ($baseUrl). Check Wi‑Fi / Contabo.';
       notifyListeners();
       return null;
     }
@@ -218,12 +273,13 @@ class WaBridgeService extends ChangeNotifier {
 
   /// Link this subscriber's single WhatsApp number (pairing code preferred).
   Future<bool> linkPhone(String rawPhone) async {
-    await setPhone(rawPhone);
-    if (phone.length < 8) {
-      lastError = 'Enter number with country code (e.g. 998901234567)';
+    final err = PhoneUtils.validationError(rawPhone);
+    if (err != null) {
+      lastError = err;
       notifyListeners();
       return false;
     }
+    await setPhone(rawPhone);
     final data = await _post('/evolution/link', {'phone': phone});
     if (data == null) return false;
     pairingCode = data['pairingCode'] as String?;
@@ -251,6 +307,46 @@ class WaBridgeService extends ChangeNotifier {
     final i = raw.indexOf('base64,');
     if (i >= 0) return raw.substring(i + 7);
     return raw;
+  }
+
+  /// Evolution contacts for nickname search (Path B linked only).
+  List<WaContact> contacts = [];
+  DateTime? _contactsFetchedAt;
+
+  Future<List<WaContact>> fetchContacts({bool force = false}) async {
+    if (!force &&
+        contacts.isNotEmpty &&
+        _contactsFetchedAt != null &&
+        DateTime.now().difference(_contactsFetchedAt!) <
+            const Duration(minutes: 5)) {
+      return contacts;
+    }
+    if (phone.isEmpty) return contacts;
+    final data = await _get('/evolution/contacts', {'phone': phone});
+    if (data == null) return contacts;
+    final raw = data['contacts'] ?? data['data'] ?? data;
+    final list = <WaContact>[];
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is! Map) continue;
+        final c = WaContact.fromJson(Map<String, dynamic>.from(item));
+        if (c.displayName.isNotEmpty || c.phone.isNotEmpty) list.add(c);
+      }
+    }
+    contacts = list;
+    _contactsFetchedAt = DateTime.now();
+    notifyListeners();
+    return contacts;
+  }
+
+  List<WaContact> filterContacts(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return const [];
+    return contacts.where((c) {
+      return c.displayName.toLowerCase().contains(q) ||
+          c.phone.contains(q) ||
+          c.pushName.toLowerCase().contains(q);
+    }).take(40).toList();
   }
 
   Future<bool> sendText({required String number, required String text}) async {

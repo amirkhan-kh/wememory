@@ -1,0 +1,19 @@
+{
+  "name": "wa-ui-scan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "scan": "node scan.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
+  }
+}

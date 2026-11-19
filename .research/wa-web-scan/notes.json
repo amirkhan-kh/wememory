@@ -1,0 +1,15 @@
+{
+  "capturedAt": "2026-11-19T06:25:31.974Z",
+  "note": "Public QR landing only. Logged-in WA shell needs owner session — not automated.",
+  "layoutTargets": [
+    "Bottom nav: Chats · Updates · Communities · Calls",
+    "Chats: brand header · search · list rows · FAB",
+    "Updates: My status · recent · channels",
+    "Calls: favourites / call log",
+    "Thread: avatar title · video · call · more · composer"
+  ],
+  "files": [
+    "/Users/amirxon/Desktop/mobile/.research/wa-web-scan/web-whatsapp-mobile.png",
+    "/Users/amirxon/Desktop/mobile/.research/wa-web-scan/web-whatsapp-desktop.png"
+  ]
+}

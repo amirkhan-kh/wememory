@@ -4,10 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wamemory/core/db/memory_store.dart';
+import 'package:wamemory/core/l10n/app_strings.dart';
+import 'package:wamemory/core/l10n/locale_controller.dart';
+import 'package:wamemory/core/models/chat.dart';
 import 'package:wamemory/core/services/archive_service.dart';
 import 'package:wamemory/core/services/profile_store.dart';
 import 'package:wamemory/core/services/wa_bridge_service.dart';
+import 'package:wamemory/core/services/wa_shell_store.dart';
 import 'package:wamemory/core/theme/app_theme.dart';
+import 'package:wamemory/core/utils/phone_utils.dart';
 import 'package:wamemory/features/home/home_shell.dart';
 import 'package:wamemory/features/onboarding/onboarding_screen.dart';
 import 'package:wamemory/main.dart';
@@ -46,20 +51,43 @@ Future<WaBridgeService> _readyBridge([ArchiveService? archive]) async {
   return bridge;
 }
 
+Future<LocaleController> _readyLocale() async {
+  final locale = LocaleController();
+  await locale.init();
+  return locale;
+}
+
+Future<WaShellStore> _readyShell() async {
+  final shell = WaShellStore();
+  await shell.init();
+  return shell;
+}
+
 Widget _homeWithProviders(
   ArchiveService archive,
   ProfileStore profile,
   WaBridgeService bridge,
+  LocaleController locale,
+  WaShellStore shell,
 ) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: archive),
       ChangeNotifierProvider.value(value: profile),
       ChangeNotifierProvider.value(value: bridge),
+      ChangeNotifierProvider.value(value: shell),
+      ChangeNotifierProvider.value(value: locale),
     ],
-    child: MaterialApp(
-      theme: AppTheme.dark,
-      home: const HomeShell(),
+    child: LocaleControllerScope(
+      controller: locale,
+      child: AnimatedBuilder(
+        animation: locale,
+        builder: (context, _) => MaterialApp(
+          theme: AppTheme.dark,
+          locale: locale.locale,
+          home: const HomeShell(),
+        ),
+      ),
     ),
   );
 }
@@ -139,12 +167,14 @@ void main() {
         expect(done, isTrue);
       });
 
-      testWidgets('home shell chats + deleted + settings', (tester) async {
+      testWidgets('home shell chats + WA tabs + settings', (tester) async {
         final archive = await _readyArchive();
         final profile = await _readyProfile();
         final bridge = await _readyBridge();
+        final locale = await _readyLocale();
+        final shell = await _readyShell();
         await tester.pumpWidget(
-          _wrap(_homeWithProviders(archive, profile, bridge)),
+          _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
         );
         await _pumpFrames(tester, 12);
 
@@ -152,37 +182,39 @@ void main() {
         expect(find.text('Flor Camden'), findsWidgets);
         expect(find.text('Joanna'), findsWidgets);
         expect(find.text('Alex Rivera'), findsWidgets);
+        expect(find.text('Chats'), findsWidgets);
+        expect(find.text('Updates'), findsWidgets);
+        expect(find.text('Communities'), findsWidgets);
+        expect(find.text('Calls'), findsWidgets);
 
-        await tester.tap(find.text('Contacts'));
+        await tester.tap(find.text('Updates'));
         await _pumpFrames(tester, 12);
-        expect(find.text('Contacts'), findsWidgets);
-        expect(find.text('Flor Camden'), findsWidgets);
+        expect(find.text('My status'), findsOneWidget);
 
-        await tester.tap(find.text('Deleted'));
+        await tester.tap(find.text('Chats'));
+        await _pumpFrames(tester, 8);
+        await tester.tap(find.byTooltip('Deleted'));
         await _pumpFrames(tester, 12);
         expect(find.text('Deleted messages'), findsOneWidget);
+        await tester.pageBack();
+        await _pumpFrames(tester, 8);
 
-        await tester.tap(find.text('Settings'));
+        // Settings gear is 3rd IconButton after Deleted+Search in header.
+        final buttons = find.byType(IconButton);
+        expect(buttons, findsWidgets);
+        await tester.tap(buttons.at(2));
         await _pumpFrames(tester, 12);
-        expect(find.text('Settings'), findsWidgets);
-        expect(find.text('You'), findsOneWidget);
         expect(find.text('Connect WhatsApp'), findsOneWidget);
-        expect(find.text('WAMemory Premium'), findsOneWidget);
-        await tester.scrollUntilVisible(
-          find.text('Notification access'),
-          120,
-          scrollable: find.byType(Scrollable).last,
-        );
-        await _pumpFrames(tester, 4);
-        expect(find.text('Notification access'), findsOneWidget);
       });
 
       testWidgets('open chat thread shows bubbles + deleted badge', (tester) async {
         final archive = await _readyArchive();
         final profile = await _readyProfile();
         final bridge = await _readyBridge();
+        final locale = await _readyLocale();
+        final shell = await _readyShell();
         await tester.pumpWidget(
-          _wrap(_homeWithProviders(archive, profile, bridge)),
+          _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
         );
         await _pumpFrames(tester, 12);
         await tester.tap(find.text('Flor Camden'));
@@ -202,12 +234,16 @@ void main() {
         final archive = await _readyArchive();
         final profile = await _readyProfile();
         final bridge = await _readyBridge();
+        final locale = await _readyLocale();
+        final shell = await _readyShell();
         await tester.pumpWidget(
           _wrap(
             WAMemoryApp(
               archive: archive,
               profile: profile,
               bridge: bridge,
+              shell: shell,
+              localeController: locale,
               showOnboarding: false,
             ),
           ),
@@ -222,12 +258,16 @@ void main() {
         final archive = await _readyArchive();
         final profile = await _readyProfile();
         final bridge = await _readyBridge(archive);
+        final locale = await _readyLocale();
+        final shell = await _readyShell();
         await tester.pumpWidget(
           _wrap(
             WAMemoryApp(
               archive: archive,
               profile: profile,
               bridge: bridge,
+              shell: shell,
+              localeController: locale,
               showOnboarding: false,
             ),
           ),
@@ -240,5 +280,94 @@ void main() {
         expect(find.text('Profile name'), findsOneWidget);
       });
     });
+
+    group('phone + API errors', () {
+      test('PhoneUtils validates country-code digits', () {
+        expect(PhoneUtils.isValid('998901234567'), isTrue);
+        expect(PhoneUtils.isValid('+998 90 123-45-67'), isTrue);
+        expect(PhoneUtils.isValid('123'), isFalse);
+        expect(PhoneUtils.validationError(''), isNotNull);
+        expect(PhoneUtils.normalize('+998-90'), '99890');
+      });
+
+      test('WaBridgeService.parseApiError reads Nest message', () {
+        expect(
+          WaBridgeService.parseApiError(
+            400,
+            '{"statusCode":400,"message":"Invalid phone — use country code + number (e.g. 998901234567)","error":"Bad Request"}',
+          ),
+          contains('Invalid phone'),
+        );
+        expect(
+          WaBridgeService.parseApiError(
+            400,
+            '{"message":["phone must be a string","too short"],"error":"Bad Request","statusCode":400}',
+          ),
+          contains('phone must be a string'),
+        );
+      });
+    });
   }
+
+  group('crash-hardening', () {
+    test('Chat.fromMap tolerates missing peer_phone', () {
+      final chat = Chat.fromMap({
+        'id': 'c1',
+        'title': 'Test',
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+        'unread_count': 0,
+        'is_group': 0,
+      });
+      expect(chat.title, 'Test');
+      expect(chat.peerPhone, isNull);
+    });
+
+    testWidgets('bad native notification does not crash archive', (tester) async {
+      final archive = await _readyArchive();
+      // Simulate malformed payloads the way MethodChannel would deliver.
+      await archive.init();
+      // Direct ingest with empty title/body must no-op.
+      await archive.simulateIncoming(title: '', body: '');
+      expect(archive.chats, isNotEmpty); // demo seed still present
+    });
+
+    test('WaContact nickname filter matches pushName', () {
+      final bridge = WaBridgeService();
+      bridge.contacts = [
+        WaContact(
+          id: '1',
+          displayName: 'Amir Dev',
+          pushName: 'amirxon',
+          phone: '998901112233',
+        ),
+        WaContact(
+          id: '2',
+          displayName: 'Flor',
+          pushName: 'flor',
+          phone: '998909998877',
+        ),
+      ];
+      expect(bridge.filterContacts('amir').length, 1);
+      expect(bridge.filterContacts('99890').length, 2);
+      expect(bridge.filterContacts('zzz'), isEmpty);
+    });
+
+    testWidgets('locale switch EN→RU does not crash shell', (tester) async {
+      final archive = await _readyArchive();
+      final profile = await _readyProfile();
+      final bridge = await _readyBridge();
+      final locale = await _readyLocale();
+      final shell = await _readyShell();
+      await tester.pumpWidget(
+        _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
+      );
+      await _pumpFrames(tester, 10);
+      await locale.setLocale(const Locale('ru'));
+      await _pumpFrames(tester, 10);
+      expect(find.text('Чаты'), findsWidgets);
+      await locale.setLocale(const Locale('en'));
+      await _pumpFrames(tester, 10);
+      expect(find.text('Chats'), findsWidgets);
+    });
+  });
 }

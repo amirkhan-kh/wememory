@@ -43,21 +43,10 @@ fi
 # Prefer debug APK for owner test (faster, no signing hassle); RELEASE=1 for release
 flutter pub get
 
-# Real phone on same Wi‑Fi needs Mac LAN IP (not 10.0.2.2 emulator loopback).
-LAN_IP="${WAMEMORY_LAN_IP:-}"
-if [[ -z "$LAN_IP" ]]; then
-  LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || true)"
-fi
-if [[ -z "$LAN_IP" ]]; then
-  LAN_IP="$(ipconfig getifaddr en1 2>/dev/null || true)"
-fi
-API_BASE="${WAMEMORY_API_BASE:-}"
-if [[ -z "$API_BASE" && -n "$LAN_IP" ]]; then
-  API_BASE="http://${LAN_IP}:3100/api"
-fi
-if [[ -z "$API_BASE" ]]; then
-  API_BASE="http://10.0.2.2:3100/api"
-fi
+# Contabo download APK must hit the public demo API (not Mac LAN / emulator).
+# Local override: WAMEMORY_API_BASE=http://192.168.x.x:3100/api ./scripts/build-apk.sh
+# Emulator: WAMEMORY_API_BASE=http://10.0.2.2:3100/api ./scripts/build-apk.sh
+API_BASE="${WAMEMORY_API_BASE:-http://13.140.202.159:8090/api}"
 echo "WAMEMORY_API_BASE=$API_BASE"
 DART_DEFINES=(--dart-define="WAMEMORY_API_BASE=$API_BASE")
 

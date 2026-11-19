@@ -1,12 +1,25 @@
 {$SITE_ADDRESS} {
-	encode gzip
+	# Gzip only for HTML/CSS/JS — never APK (corrupt install / parse failed).
+	@compressible {
+		not path /download/* *.apk
+	}
+	encode @compressible gzip
 
 	# NestJS API
 	handle /api* {
 		reverse_proxy api:3000
 	}
 
-	# Test landing + APK downloads
+	# APK downloads — raw bytes, no SPA fallback to index.html
+	handle /download/* {
+		root * /srv/web
+		file_server
+		header Content-Type "application/vnd.android.package-archive"
+		header Content-Disposition "attachment; filename=\"wamemory-test.apk\""
+		header Cache-Control "no-store"
+	}
+
+	# Test landing
 	handle {
 		root * /srv/web
 		file_server
@@ -16,7 +29,5 @@
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		# Allow APK download
-		+Content-Disposition
 	}
 }

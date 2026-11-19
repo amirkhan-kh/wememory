@@ -184,9 +184,49 @@ export class EvolutionService {
     }
     if (status >= 400) {
       this.log.warn(`Evolution ${method} ${path} → ${status} ${text}`);
-      throw new ServiceUnavailableException(`Evolution error ${status}`);
+      const detail = this.extractEvoErrorMessage(json) || text.slice(0, 240);
+      // 4xx from Evolution = bad input / WhatsApp rejected number — not "server down".
+      if (status >= 400 && status < 500) {
+        throw new BadRequestException(
+          detail || `Evolution rejected request (${status})`,
+        );
+      }
+      throw new ServiceUnavailableException(
+        detail || `Evolution error ${status}`,
+      );
     }
     return json as T;
+  }
+
+  /** Pull a readable string from Evolution / Nest-style error bodies. */
+  private extractEvoErrorMessage(json: unknown): string | null {
+    if (!json || typeof json !== 'object') return null;
+    const o = json as Record<string, unknown>;
+    const msg = o.message ?? o.error ?? o.response;
+    if (typeof msg === 'string' && msg.trim()) return msg.trim();
+    if (Array.isArray(msg)) {
+      const parts = msg
+        .map((m) => {
+          if (typeof m === 'string') return m;
+          if (m && typeof m === 'object') {
+            const row = m as Record<string, unknown>;
+            return [row.message, row.number, row.jid, row.name]
+              .filter((x) => typeof x === 'string' && x)
+              .join(' ');
+          }
+          return '';
+        })
+        .filter(Boolean);
+      if (parts.length) return parts.join('; ');
+    }
+    if (msg && typeof msg === 'object') {
+      const nested = msg as Record<string, unknown>;
+      if (typeof nested.message === 'string') return nested.message;
+      if (Array.isArray(nested.message)) {
+        return this.extractEvoErrorMessage(nested);
+      }
+    }
+    return null;
   }
 
   status() {
@@ -254,9 +294,9 @@ export class EvolutionService {
    */
   async linkPhone(rawPhone: string): Promise<LinkResult> {
     const phone = this.normalizePhone(rawPhone);
-    if (phone.length < 8) {
+    if (phone.length < 8 || phone.length > 15) {
       throw new BadRequestException(
-        'Enter WhatsApp number with country code (e.g. 998901234567)',
+        'Invalid phone — use country code + number (e.g. 998901234567)',
       );
     }
     const instance = this.instanceForPhone(phone);
@@ -266,12 +306,23 @@ export class EvolutionService {
     try {
       await this.evo('GET', `/instance/connectionState/${instance}`);
     } catch {
-      createdPayload = await this.evo('POST', '/instance/create', {
-        instanceName: instance,
-        number: phone,
-        integration: 'WHATSAPP-BAILEYS',
-        qrcode: true,
-      });
+      // Create without `number` first — some Evolution builds reject create
+      // with "Invalid phone or name" when number/name pairing is wrong.
+      try {
+        createdPayload = await this.evo('POST', '/instance/create', {
+          instanceName: instance,
+          integration: 'WHATSAPP-BAILEYS',
+          qrcode: true,
+        });
+      } catch (first) {
+        this.log.warn(`create without number failed: ${first}`);
+        createdPayload = await this.evo('POST', '/instance/create', {
+          instanceName: instance,
+          number: phone,
+          integration: 'WHATSAPP-BAILEYS',
+          qrcode: true,
+        });
+      }
     }
 
     let extracted = this.extractPairing(

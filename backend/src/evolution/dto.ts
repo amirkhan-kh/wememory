@@ -1,9 +1,17 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SendTextDto {
   @IsString()
-  @MinLength(5)
+  @MinLength(8)
+  @MaxLength(15)
+  @Matches(/^\d+$/, { message: 'number must be digits only with country code' })
   number!: string;
 
   @IsString()
@@ -17,14 +25,22 @@ export class SendTextDto {
 }
 
 export class LinkPhoneDto {
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: 'phone must be a string' })
+  @MinLength(8, {
+    message: 'Invalid phone — use country code + number (e.g. 998901234567)',
+  })
+  @MaxLength(15, { message: 'Invalid phone — too many digits' })
+  @Matches(/^\d+$/, {
+    message: 'Invalid phone — digits only, no spaces or +',
+  })
   phone!: string;
 }
 
 export class SendMediaDto {
   @IsString()
-  @MinLength(5)
+  @MinLength(8)
+  @MaxLength(15)
+  @Matches(/^\d+$/, { message: 'number must be digits only with country code' })
   number!: string;
 
   /** image | video | audio | document */

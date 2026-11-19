@@ -26,3 +26,4 @@ deploy/web/download/*.apk
 
 # Script backups
 *.bak
+scripts/wa-ui-scan/node_modules/
