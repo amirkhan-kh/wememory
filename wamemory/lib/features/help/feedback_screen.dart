@@ -67,7 +67,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 children: [
                   Text(
                     s.feedbackIntro,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       height: 1.4,
                     ),
@@ -77,15 +77,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     controller: _ctrl,
                     maxLines: 5,
                     maxLength: 800,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: s.feedbackHint,
-                      hintStyle: const TextStyle(color: AppColors.textSecondary),
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.bgDeep.withValues(alpha: 0.45),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.divider),
+                        borderSide: BorderSide(color: AppColors.divider),
                       ),
                     ),
                   ),
@@ -106,7 +106,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
                 child: Text(
                   s.feedbackHistory,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.accent,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -119,12 +119,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   children: [
                     for (var i = 0; i < shell.feedback.length; i++) ...[
                       if (i > 0)
-                        const Divider(height: 1, color: AppColors.divider),
+                        Divider(height: 1, color: AppColors.divider),
                       ListTile(
                         leading: const WaIcon(WaIcons.check, size: 20),
                         title: Text(
                           shell.feedback[i].body,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 14,
                           ),
@@ -133,7 +133,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           DateTime.fromMillisecondsSinceEpoch(
                             shell.feedback[i].atMs,
                           ).toIso8601String().substring(0, 16),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),

@@ -341,12 +341,18 @@ class WaBridgeService extends ChangeNotifier {
 
   List<WaContact> filterContacts(String query) {
     final q = query.trim().toLowerCase();
-    if (q.isEmpty) return const [];
+    if (q.isEmpty) return [];
+    final digits = q.replaceAll(RegExp(r'\D'), '');
     return contacts.where((c) {
-      return c.displayName.toLowerCase().contains(q) ||
-          c.phone.contains(q) ||
-          c.pushName.toLowerCase().contains(q);
-    }).take(40).toList();
+      final name = c.displayName.toLowerCase();
+      final push = c.pushName.toLowerCase();
+      final id = c.id.toLowerCase();
+      return name.contains(q) ||
+          push.contains(q) ||
+          id.contains(q) ||
+          (digits.isNotEmpty && c.phone.contains(digits)) ||
+          c.phone.contains(q);
+    }).take(60).toList();
   }
 
   Future<bool> sendText({required String number, required String text}) async {
@@ -405,7 +411,7 @@ class WaBridgeService extends ChangeNotifier {
         'phone': phone,
       });
       if (data == null) return 0;
-      final list = (data['messages'] as List?) ?? const [];
+      final list = (data['messages'] as List?) ?? [];
       var applied = 0;
       for (final raw in list) {
         if (raw is! Map) continue;

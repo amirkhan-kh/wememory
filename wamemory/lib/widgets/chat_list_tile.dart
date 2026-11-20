@@ -101,7 +101,7 @@ class ChatListTile extends StatelessWidget {
                           ),
                           child: Text(
                             '${chat.unreadCount}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.black,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,

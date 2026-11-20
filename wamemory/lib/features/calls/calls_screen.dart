@@ -52,7 +52,7 @@ class CallsScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         s.calls,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -76,7 +76,7 @@ class CallsScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
                   s.callsBody,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     height: 1.35,
                   ),
@@ -98,7 +98,7 @@ class CallsScreen extends StatelessWidget {
                     : ListView.separated(
                         padding: const EdgeInsets.only(bottom: 88),
                         itemCount: shell.calls.length,
-                        separatorBuilder: (_, __) => const Divider(
+                        separatorBuilder: (_, __) => Divider(
                           height: 1,
                           indent: 76,
                           color: AppColors.divider,
@@ -130,7 +130,7 @@ class CallsScreen extends StatelessWidget {
                             ),
                             title: Text(
                               call.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -151,7 +151,7 @@ class CallsScreen extends StatelessWidget {
                                   '${call.video ? s.video : s.voice} · '
                                   '${when.hour.toString().padLeft(2, '0')}:'
                                   '${when.minute.toString().padLeft(2, '0')}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 13,
                                   ),
@@ -231,7 +231,7 @@ class CallsScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 chat.title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -241,7 +241,7 @@ class CallsScreen extends StatelessWidget {
               Text(
                 s.callLoggedBody,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               FilledButton(
@@ -286,7 +286,7 @@ class _FavouritesEmpty extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const WaIcon(
+              WaIcon(
                 WaIcons.call,
                 size: 56,
                 color: AppColors.accentBright,
@@ -296,7 +296,7 @@ class _FavouritesEmpty extends StatelessWidget {
               Text(
                 s.noCalls,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -306,7 +306,7 @@ class _FavouritesEmpty extends StatelessWidget {
               Text(
                 s.noCallsHint,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -321,7 +321,7 @@ class _FavouritesEmpty extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: Text(
             s.favourites,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
@@ -337,19 +337,19 @@ class _FavouritesEmpty extends StatelessWidget {
                 ),
                 title: Text(
                   chat.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
                   s.tapToCall,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
                 ),
-                trailing: const WaIcon(
+                trailing: WaIcon(
                   WaIcons.call,
                   size: 22,
                   color: AppColors.accentBright,

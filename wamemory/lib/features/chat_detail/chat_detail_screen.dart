@@ -239,7 +239,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         widget.chat.peerPhone!.isEmpty)
                     ? widget.chat.title
                     : '+${widget.chat.peerPhone}',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               onTap: () {
                 Navigator.pop(ctx);
@@ -254,7 +254,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           ? 'Local archive contact · link WhatsApp to send live.'
                           : 'Phone +${widget.chat.peerPhone}\n\n'
                               'Deleted copies stay in WAMemory. Nothing is written back into WhatsApp.',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                     actions: [
                       TextButton(
@@ -348,8 +348,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         content: TextField(
           controller: ctrl,
           keyboardType: TextInputType.phone,
-          style: const TextStyle(color: AppColors.textPrimary),
-          decoration: const InputDecoration(
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
             hintText: '998901234567',
             hintStyle: TextStyle(color: AppColors.textSecondary),
           ),
@@ -392,7 +392,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 children: [
                   Text(
                     widget.chat.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -402,7 +402,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     context.watch<WaBridgeService>().isLinked
                         ? 'online'
                         : 'tap to link WhatsApp',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -442,7 +442,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         children: [
           Expanded(
             child: _loading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(color: AppColors.accent),
                   )
                 : ListView.builder(
@@ -453,7 +453,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   ),
           ),
           if (_sendingMedia)
-            const LinearProgressIndicator(
+            LinearProgressIndicator(
               minHeight: 2,
               color: AppColors.accent,
             ),
@@ -564,7 +564,7 @@ class _ComposerBarState extends State<_ComposerBar> {
                   children: [
                     IconButton(
                       onPressed: _showAttachSheet,
-                      icon: const WaIcon(
+                      icon: WaIcon(
                         WaIcons.plus,
                         size: 22,
                         color: AppColors.accentBright,
@@ -574,7 +574,7 @@ class _ComposerBarState extends State<_ComposerBar> {
                     Expanded(
                       child: TextField(
                         controller: _controller,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: S.of(context).typeHere,
                           border: InputBorder.none,

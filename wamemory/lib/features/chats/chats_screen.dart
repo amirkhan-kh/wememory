@@ -20,23 +20,17 @@ class ChatsScreen extends StatefulWidget {
 }
 
 class _ChatsScreenState extends State<ChatsScreen> {
-  final _search = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
+  /// 0 all · 1 unread · 2 groups
+  int _filter = 0;
 
   @override
   Widget build(BuildContext context) {
     final archive = context.watch<ArchiveService>();
     final s = S.from(context.watch<LocaleController>());
     final chats = archive.chats.where((c) {
-      if (_query.isEmpty) return true;
-      return c.title.toLowerCase().contains(_query.toLowerCase()) ||
-          (c.lastMessage ?? '').toLowerCase().contains(_query.toLowerCase());
+      if (_filter == 1 && c.unreadCount <= 0) return false;
+      if (_filter == 2 && !c.isGroup) return false;
+      return true;
     }).toList();
 
     return Scaffold(
@@ -46,15 +40,15 @@ class _ChatsScreenState extends State<ChatsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 4, 4),
+              padding: const EdgeInsets.fromLTRB(16, 8, 4, 0),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       s.appName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 26,
+                      style: TextStyle(
+                        color: AppColors.brandTitle,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -96,12 +90,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Material(
                   color: AppColors.panel,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        const WaIcon(
+                        WaIcon(
                           WaIcons.notify,
                           size: 22,
                           color: AppColors.warning,
@@ -111,7 +105,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                         Expanded(
                           child: Text(
                             s.enableNotificationsBody,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 13,
                             ),
@@ -127,7 +121,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           },
                           child: Text(
                             s.enable,
-                            style: const TextStyle(color: AppColors.accentBright),
+                            style: TextStyle(color: AppColors.accentBright),
                           ),
                         ),
                       ],
@@ -136,28 +130,63 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.panel,
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+              child: Material(
+                color: AppColors.searchField,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(24),
-                ),
-                child: TextField(
-                  controller: _search,
-                  onChanged: (v) => setState(() => _query = v),
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: s.searchHint,
-                    hintStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: WaIcon(WaIcons.search, size: 20),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const SearchScreen(),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
                     ),
-                    border: InputBorder.none,
-                    filled: false,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        const WaIcon(WaIcons.search, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          s.searchHint,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: 'All',
+                    selected: _filter == 0,
+                    onTap: () => setState(() => _filter = 0),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Unread',
+                    selected: _filter == 1,
+                    onTap: () => setState(() => _filter = 1),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Groups',
+                    selected: _filter == 2,
+                    onTap: () => setState(() => _filter = 2),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -165,12 +194,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
                   ? Center(
                       child: Text(
                         s.noChats,
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     )
                   : ListView.separated(
                       itemCount: chats.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, __) => Divider(
                         height: 1,
                         indent: 76,
                         color: AppColors.divider,
@@ -201,6 +230,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
           );
         },
         backgroundColor: AppColors.accent,
+        elevation: 3,
         child: const WaIcon(
           WaIcons.plus,
           size: 26,
@@ -269,6 +299,41 @@ class _ChatsScreenState extends State<ChatsScreen> {
     await archive.simulateIncoming(
       title: 'Demo Contact',
       body: 'Test message at ${TimeOfDay.now().format(context)}',
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.accent.withValues(alpha: 0.22) : AppColors.panel,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? AppColors.accentBright : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

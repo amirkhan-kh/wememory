@@ -26,13 +26,16 @@ class DeletedScreen extends StatelessWidget {
           title: const Text('Deleted messages'),
         ),
         body: items.isEmpty
-            ? const Center(
+            ? Center(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(32),
                   child: Text(
                     'Deleted messages that WAMemory already archived will appear here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               )
@@ -54,7 +57,7 @@ class DeletedScreen extends StatelessWidget {
                             AvatarCircle(name: title, colorHex: color, size: 44),
                         title: Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -63,13 +66,13 @@ class DeletedScreen extends StatelessWidget {
                           m.body,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const WaIcon(
+                            WaIcon(
                               WaIcons.deleted,
                               size: 18,
                               color: AppColors.warning,
@@ -82,7 +85,7 @@ class DeletedScreen extends StatelessWidget {
                                       .add_Hm()
                                       .format(m.deletedAt!)
                                   : '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
                               ),

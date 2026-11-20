@@ -137,7 +137,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen> {
                   children: [
                     Text(
                       'Step ${_index + 1} of 4',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -196,9 +196,9 @@ class _PhoneStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const WaIcon(WaIcons.lock, size: 42, color: AppColors.accentBright, glow: true),
+          WaIcon(WaIcons.lock, size: 42, color: AppColors.accentBright, glow: true),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Your WhatsApp number',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -208,7 +208,7 @@ class _PhoneStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Saved on this phone only. Live WhatsApp link is Settings → Connect (ban risk — prefer a test number).',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
@@ -217,8 +217,8 @@ class _PhoneStep extends StatelessWidget {
           TextField(
             controller: controller,
             keyboardType: TextInputType.phone,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
-            decoration: const InputDecoration(
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+            decoration: InputDecoration(
               hintText: '998901234567',
               hintStyle: TextStyle(color: AppColors.textSecondary),
               prefixText: '+ ',
@@ -242,7 +242,7 @@ class _NameStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Profile name',
             style: TextStyle(
               color: AppColors.textPrimary,
@@ -251,7 +251,7 @@ class _NameStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Shown in WAMemory Settings and chats header.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary),
@@ -260,8 +260,8 @@ class _NameStep extends StatelessWidget {
           TextField(
             controller: controller,
             textCapitalization: TextCapitalization.words,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
-            decoration: const InputDecoration(
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+            decoration: InputDecoration(
               hintText: 'Your name',
               hintStyle: TextStyle(color: AppColors.textSecondary),
             ),
@@ -283,7 +283,7 @@ class _AboutStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'About',
             style: TextStyle(
               color: AppColors.textPrimary,
@@ -292,7 +292,7 @@ class _AboutStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Optional status line — like WhatsApp About.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary),
@@ -301,8 +301,8 @@ class _AboutStep extends StatelessWidget {
           TextField(
             controller: controller,
             maxLines: 3,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-            decoration: const InputDecoration(
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+            decoration: InputDecoration(
               hintText: 'Hey there! I am using WAMemory.',
               hintStyle: TextStyle(color: AppColors.textSecondary),
             ),
@@ -331,7 +331,7 @@ class _PhotoStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Profile photo',
             style: TextStyle(
               color: AppColors.textPrimary,
@@ -340,7 +340,7 @@ class _PhotoStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Add a photo from your gallery.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary),
@@ -359,11 +359,11 @@ class _PhotoStep extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
-                  child: const WaIcon(
+                  child: WaIcon(
                     WaIcons.camera,
                     size: 20,
                     color: AppColors.textPrimary,

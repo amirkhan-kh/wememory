@@ -1,6 +1,7 @@
 # Frontend (Flutter)
 
-Flutter dark archive UI. Copy languages: **EN** + **RU** (`lib/l10n/`). Design is WhatsApp-familiar **layout**, but **creative surface**: surreal aurora + glassmorphism + scroll-linked 3D.
+Flutter dark archive UI. Copy languages: **EN** + **RU** (`lib/l10n/`).  
+**Owner override (2026-11-20):** classic WhatsApp Android dark — flat panels, no aurora/glass/3D. Palette `#0B141A` / `#1F2C34` / `#00A884`. Wordmark stays **WAMemory** (no Meta logo clone).
 
 ```
 wamemory/lib/

@@ -64,49 +64,49 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       backgroundColor: AppColors.bgDeep,
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
-        height: 68,
-        backgroundColor: AppColors.appBar,
-        indicatorColor: AppColors.accent.withValues(alpha: 0.22),
+        height: 64,
+        backgroundColor: AppColors.navBar,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.accent.withValues(alpha: 0.18),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: [
           NavigationDestination(
             icon: const WaIcon(WaIcons.chats, size: 24),
-            selectedIcon: const WaIcon(
+            selectedIcon: WaIcon(
               WaIcons.chatsFilled,
               size: 24,
               color: AppColors.textPrimary,
-              glow: true,
             ),
             label: s.chats,
           ),
           NavigationDestination(
             icon: const WaIcon(WaIcons.image, size: 24),
-            selectedIcon: const WaIcon(
+            selectedIcon: WaIcon(
               WaIcons.image,
               size: 24,
               color: AppColors.textPrimary,
-              glow: true,
             ),
             label: s.updates,
           ),
           NavigationDestination(
             icon: const WaIcon(WaIcons.archive, size: 24),
-            selectedIcon: const WaIcon(
+            selectedIcon: WaIcon(
               WaIcons.archive,
               size: 24,
               color: AppColors.textPrimary,
-              glow: true,
             ),
             label: s.communities,
           ),
           NavigationDestination(
             icon: const WaIcon(WaIcons.call, size: 24),
-            selectedIcon: const WaIcon(
+            selectedIcon: WaIcon(
               WaIcons.call,
               size: 24,
               color: AppColors.textPrimary,
-              glow: true,
             ),
             label: s.calls,
           ),

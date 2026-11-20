@@ -7,12 +7,13 @@ import '../../core/models/chat.dart';
 import '../../core/models/message.dart';
 import '../../core/services/archive_service.dart';
 import '../../core/services/wa_bridge_service.dart';
+import '../../core/services/wa_shell_store.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/wa_icons.dart';
 import '../chat_detail/chat_detail_screen.dart';
 
-/// WhatsApp-style search: live nickname suggestions + chats + messages.
+/// WhatsApp-style global search: contacts, nicknames, groups, channels, chats, messages.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -32,7 +33,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WaBridgeService>().fetchContacts();
+      context.read<WaBridgeService>().fetchContacts(force: true);
     });
   }
 
@@ -45,7 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onChanged(String raw) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 180), () => _run(raw));
+    _debounce = Timer(const Duration(milliseconds: 160), () => _run(raw));
   }
 
   Future<void> _run(String q) async {
@@ -78,6 +79,15 @@ class _SearchScreenState extends State<SearchScreen> {
     return null;
   }
 
+  bool _looksChannel(Chat c) {
+    final id = c.id.toLowerCase();
+    final title = c.title.toLowerCase();
+    return id.contains('newsletter') ||
+        id.contains('@broadcast') ||
+        title.contains('channel') ||
+        title.startsWith('#');
+  }
+
   Future<void> _openContact(WaContact c) async {
     final archive = context.read<ArchiveService>();
     final chat = await archive.openOrCreatePeerChat(
@@ -104,8 +114,10 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final archive = context.watch<ArchiveService>();
     final bridge = context.watch<WaBridgeService>();
+    final shell = context.watch<WaShellStore>();
     final q = _query.toLowerCase();
-    final chats = q.isEmpty
+
+    final matchedChats = q.isEmpty
         ? <Chat>[]
         : archive.chats
             .where(
@@ -116,9 +128,20 @@ class _SearchScreenState extends State<SearchScreen> {
             )
             .toList();
 
-    // Prefer contact nicknames that are not already in chat list.
+    final groups = matchedChats.where((c) => c.isGroup && !_looksChannel(c)).toList();
+    final channels = matchedChats.where(_looksChannel).toList();
+    final dmChats = matchedChats
+        .where((c) => !c.isGroup && !_looksChannel(c))
+        .toList();
+
+    final communityHits = q.isEmpty
+        ? <ShellCommunity>[]
+        : shell.communities
+            .where((c) => c.name.toLowerCase().contains(q))
+            .toList();
+
     final chatPhones = {
-      for (final c in chats)
+      for (final c in matchedChats)
         if ((c.peerPhone ?? '').isNotEmpty) c.peerPhone!,
     };
     final nickHits = _contactHits
@@ -129,148 +152,128 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: AppColors.bgDeep,
       appBar: AppBar(
         backgroundColor: AppColors.appBar,
+        titleSpacing: 0,
         title: TextField(
           controller: _ctrl,
           autofocus: true,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 17),
+          cursorColor: AppColors.accent,
           decoration: InputDecoration(
             hintText: bridge.isLinked
-                ? 'Search name, number, messages'
-                : 'Search chats & messages',
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
+                ? 'Search name or number'
+                : 'Search…',
+            hintStyle: TextStyle(color: AppColors.textSecondary),
             border: InputBorder.none,
+            filled: false,
           ),
           onChanged: _onChanged,
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              _ctrl.clear();
-              _run('');
-            },
-            icon: const WaIcon(WaIcons.refresh, size: 20),
-          ),
+          if (_query.isNotEmpty)
+            IconButton(
+              tooltip: 'Clear',
+              onPressed: () {
+                _ctrl.clear();
+                _run('');
+              },
+              icon: Icon(Icons.close, color: AppColors.textSecondary),
+            ),
         ],
       ),
       body: _query.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  bridge.isLinked
-                      ? 'Type a WhatsApp nickname or number — suggestions appear live.'
-                      : 'Link WhatsApp in Settings → Connect to search contacts by nickname.\nLocal chats still searchable.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            )
+          ? _EmptyHint(linked: bridge.isLinked, contactCount: bridge.contacts.length)
           : _busy
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(color: AppColors.accent),
                 )
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
+                  padding: const EdgeInsets.only(bottom: 32),
                   children: [
                     if (nickHits.isNotEmpty) ...[
-                      const _Label('Contacts'),
+                      const _SectionLabel('Contacts'),
                       for (final c in nickHits)
-                        ListTile(
-                          leading: AvatarCircle(
-                            name: c.displayName,
-                            size: 44,
-                          ),
-                          title: Text(
-                            c.displayName,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            c.phone.isNotEmpty
-                                ? '+${c.phone}'
-                                : (c.pushName.isNotEmpty
-                                    ? c.pushName
-                                    : 'WhatsApp contact'),
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                        _ResultTile(
+                          name: c.displayName,
+                          subtitle: [
+                            if (c.pushName.isNotEmpty &&
+                                c.pushName != c.displayName)
+                              '~ ${c.pushName}',
+                            if (c.phone.isNotEmpty) '+${c.phone}',
+                          ].join(' · '),
                           onTap: () => _openContact(c),
                         ),
                     ],
-                    if (chats.isNotEmpty) ...[
-                      const _Label('Chats'),
-                      for (final chat in chats)
-                        ListTile(
-                          leading: AvatarCircle(
-                            name: chat.title,
-                            colorHex: chat.avatarColor,
-                            size: 44,
-                          ),
-                          title: Text(
-                            chat.title,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            chat.lastMessage ?? '',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                    if (groups.isNotEmpty) ...[
+                      const _SectionLabel('Groups'),
+                      for (final chat in groups)
+                        _ResultTile(
+                          name: chat.title,
+                          subtitle: chat.lastMessage ?? 'Group',
+                          colorHex: chat.avatarColor,
+                          onTap: () => _openChat(chat),
+                        ),
+                    ],
+                    if (channels.isNotEmpty || communityHits.isNotEmpty) ...[
+                      const _SectionLabel('Channels'),
+                      for (final chat in channels)
+                        _ResultTile(
+                          name: chat.title,
+                          subtitle: chat.lastMessage ?? 'Channel',
+                          colorHex: chat.avatarColor,
+                          onTap: () => _openChat(chat),
+                        ),
+                      for (final c in communityHits)
+                        _ResultTile(
+                          name: c.name,
+                          subtitle: 'Community',
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Community: ${c.name}')),
+                            );
+                          },
+                        ),
+                    ],
+                    if (dmChats.isNotEmpty) ...[
+                      const _SectionLabel('Chats'),
+                      for (final chat in dmChats)
+                        _ResultTile(
+                          name: chat.title,
+                          subtitle: chat.lastMessage ?? '',
+                          colorHex: chat.avatarColor,
                           onTap: () => _openChat(chat),
                         ),
                     ],
                     if (_messages.isNotEmpty) ...[
-                      const _Label('Messages'),
+                      const _SectionLabel('Messages'),
                       for (final m in _messages)
                         Builder(
                           builder: (context) {
                             final chat = _chatFor(archive, m.chatId);
                             final title = chat?.title ?? 'Chat';
-                            return ListTile(
-                              leading: AvatarCircle(
-                                name: title,
-                                colorHex: chat?.avatarColor,
-                                size: 44,
-                              ),
-                              title: Text(
-                                title,
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                m.body,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              onTap: chat == null
-                                  ? null
-                                  : () => _openChat(chat),
+                            return _ResultTile(
+                              name: title,
+                              subtitle: m.body,
+                              colorHex: chat?.avatarColor,
+                              onTap: chat == null ? null : () => _openChat(chat),
                             );
                           },
                         ),
                     ],
                     if (nickHits.isEmpty &&
-                        chats.isEmpty &&
+                        groups.isEmpty &&
+                        channels.isEmpty &&
+                        communityHits.isEmpty &&
+                        dmChats.isEmpty &&
                         _messages.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 48),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 64),
                         child: Center(
                           child: Text(
-                            'No results',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            'No results found',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -280,23 +283,114 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-class _Label extends StatelessWidget {
-  const _Label(this.text);
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint({required this.linked, required this.contactCount});
+  final bool linked;
+  final int contactCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            WaIcon(
+              WaIcons.search,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              linked
+                  ? 'Search contacts, nicknames, groups, channels and messages'
+                  : 'Search chats and messages.\nConnect WhatsApp in Settings for contact nicknames.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 15,
+                height: 1.4,
+              ),
+            ),
+            if (linked && contactCount > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                '$contactCount contacts loaded',
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
       child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
+        text,
+        style: TextStyle(
           color: AppColors.accent,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _ResultTile extends StatelessWidget {
+  const _ResultTile({
+    required this.name,
+    required this.subtitle,
+    this.colorHex,
+    this.onTap,
+  });
+
+  final String name;
+  final String subtitle;
+  final String? colorHex;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: AvatarCircle(name: name, colorHex: colorHex, size: 48),
+      title: Text(
+        name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      subtitle: subtitle.isEmpty
+          ? null
+          : Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
     );
   }
 }

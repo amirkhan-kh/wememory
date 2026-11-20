@@ -62,8 +62,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: TextField(
                     controller: _search,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
                       icon: WaIcon(WaIcons.search, size: 20),
                       hintText: 'Search contacts',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
@@ -75,7 +75,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               ),
               Expanded(
                 child: contacts.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'No contacts yet — archive chats first',
                           style: TextStyle(color: AppColors.textSecondary),
@@ -93,7 +93,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                             ),
                             title: Text(
                               c.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -102,7 +102,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                               c.lastMessage ?? 'Tap to open chat',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),

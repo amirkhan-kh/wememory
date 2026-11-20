@@ -11,6 +11,7 @@ import '../../widgets/avatar_circle.dart';
 import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
 import '../chat_detail/chat_detail_screen.dart';
+import '../search/search_screen.dart';
 
 /// WhatsApp-like Updates (Status + Channels) — local archive shell.
 class UpdatesScreen extends StatelessWidget {
@@ -38,7 +39,7 @@ class UpdatesScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           s.updates,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
@@ -48,8 +49,10 @@ class UpdatesScreen extends StatelessWidget {
                       IconButton(
                         tooltip: s.searchHint,
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(s.statusSearchHint)),
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SearchScreen(),
+                            ),
                           );
                         },
                         icon: const WaIcon(WaIcons.search, size: 22),
@@ -68,7 +71,7 @@ class UpdatesScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: Text(
                     s.statusSection,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -114,7 +117,7 @@ class UpdatesScreen extends StatelessWidget {
                   ),
                   title: Text(
                     s.myStatus,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -123,7 +126,7 @@ class UpdatesScreen extends StatelessWidget {
                     shell.myStatus.isEmpty ? s.tapToAddStatus : shell.myStatus,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -133,7 +136,7 @@ class UpdatesScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                     child: Text(
                       s.recentUpdates,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -170,7 +173,7 @@ class UpdatesScreen extends StatelessWidget {
                         ),
                         title: Text(
                           chat.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -179,7 +182,7 @@ class UpdatesScreen extends StatelessWidget {
                           chat.lastMessage ?? s.noPreview,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       );
                     },
@@ -192,7 +195,7 @@ class UpdatesScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                   child: Text(
                     s.channels,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -208,7 +211,7 @@ class UpdatesScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const WaIcon(
+                        WaIcon(
                           WaIcons.image,
                           size: 28,
                           color: AppColors.accentBright,
@@ -217,7 +220,7 @@ class UpdatesScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           s.channelsBody,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             height: 1.4,
                           ),
@@ -231,7 +234,7 @@ class UpdatesScreen extends StatelessWidget {
                           },
                           child: Text(
                             s.findChannels,
-                            style: const TextStyle(color: AppColors.accentBright),
+                            style: TextStyle(color: AppColors.accentBright),
                           ),
                         ),
                       ],
@@ -261,10 +264,10 @@ class UpdatesScreen extends StatelessWidget {
           controller: ctrl,
           maxLength: 140,
           autofocus: true,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: s.tapToAddStatus,
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
+            hintStyle: TextStyle(color: AppColors.textSecondary),
           ),
         ),
         actions: [
@@ -305,7 +308,7 @@ class UpdatesScreen extends StatelessWidget {
                     title: Text(s.statusPrivacy),
                     content: Text(
                       s.statusPrivacyBody,
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                     actions: [
                       TextButton(

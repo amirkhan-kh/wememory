@@ -125,7 +125,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const WaIcon(
+                  WaIcon(
                     WaIcons.warning,
                     size: 22,
                     color: AppColors.warning,
@@ -136,7 +136,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     child: Text(
                       bridge.banWarning ??
                           'One WhatsApp number per account. Unofficial link — ban risk. Use a dedicated test number.',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
@@ -152,7 +152,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Your WhatsApp number',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -161,7 +161,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Country code + number, digits only (e.g. 998901234567). This links your existing WhatsApp — it does not create a new account.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -174,8 +174,8 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[\d+]')),
                     ],
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: '998901234567',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       prefixText: '+ ',
@@ -195,7 +195,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     'State: ${bridge.connectionState}'
                     '${bridge.instanceName != null ? ' · ${bridge.instanceName}' : ''}'
                     '${bridge.lastError != null ? '\n${bridge.lastError}' : ''}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -210,7 +210,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 initiallyExpanded: _showAdvanced,
                 onExpansionChanged: (v) => setState(() => _showAdvanced = v),
                 tilePadding: const EdgeInsets.symmetric(horizontal: 4),
-                title: const Text(
+                title: Text(
                   'Advanced (API URL)',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -225,7 +225,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
+                        Text(
                           'Only change this if Contabo default fails. Do not paste API keys here.',
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -234,8 +234,8 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         ),
                         TextField(
                           controller: _urlCtrl,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: const InputDecoration(
+                          style: TextStyle(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
                             hintText: 'http://13.140.202.159:8090/api',
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                           ),
@@ -257,12 +257,12 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Enter this code in WhatsApp',
                       style: TextStyle(color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'WhatsApp → Linked devices → Link with phone number',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -273,7 +273,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     const SizedBox(height: 16),
                     SelectableText(
                       bridge.pairingCode!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.accentBright,
                         fontSize: 36,
                         fontWeight: FontWeight.w800,
@@ -306,12 +306,12 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Or scan QR with WhatsApp',
                       style: TextStyle(color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'WhatsApp → Linked devices → Link a device',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -328,7 +328,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         height: 240,
                         fit: BoxFit.contain,
                         gaplessPlayback: true,
-                        errorBuilder: (_, __, ___) => const Text(
+                        errorBuilder: (_, __, ___) => Text(
                           'Invalid QR data — tap Link again',
                           style: TextStyle(color: AppColors.warning),
                         ),
@@ -350,7 +350,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 bridge.isLinked
                     ? 'Linked. Live sync every 2s (webhook → Nest → app).'
                     : 'Default API: Contabo. After Link, open WhatsApp → Linked devices and enter the code (or scan QR). Prefer a test number.',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
                 ),

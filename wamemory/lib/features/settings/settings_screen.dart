@@ -7,17 +7,21 @@ import '../../core/services/archive_service.dart';
 import '../../core/services/profile_store.dart';
 import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_controller.dart';
 import '../../widgets/avatar_circle.dart';
-import '../../widgets/surreal_background.dart';
 import '../../widgets/wa_icons.dart';
 import '../connect/connect_screen.dart';
 import '../help/feedback_screen.dart';
 import '../help/premium_screen.dart';
 import '../help/retention_screen.dart';
 import '../profile/profile_screen.dart';
+import '../search/search_screen.dart';
+import 'broadcasts_screen.dart';
+import 'starred_screen.dart';
 
 const _appVersion = '0.1.0';
 
+/// WhatsApp Settings layout (light screenshot + dark palette).
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -26,417 +30,359 @@ class SettingsScreen extends StatelessWidget {
     final archive = context.watch<ArchiveService>();
     final profile = context.watch<ProfileStore>();
     final bridge = context.watch<WaBridgeService>();
+    final theme = context.watch<ThemeController>();
+    final s = S.from(context.watch<LocaleController>());
 
-    return SurrealBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('Settings'),
-          backgroundColor: Colors.transparent,
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(
+        backgroundColor: AppColors.appBar,
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w500,
+            fontSize: 20,
+          ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            _ProfileHeader(
-              profile: profile,
-              phone: profile.phone.isNotEmpty ? profile.phone : bridge.phone,
-              chatCount: archive.chats.length,
-              onEdit: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const ProfileScreen(),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const SearchScreen()),
+              );
+            },
+            icon: WaIcon(WaIcons.search, size: 22, color: AppColors.iconMuted),
+          ),
+        ],
+      ),
+      body: ListView(
+        children: [
+          _ProfileRow(
+            profile: profile,
+            phone: profile.phone.isNotEmpty ? profile.phone : bridge.phone,
+            onEdit: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+          Divider(height: 1, color: AppColors.divider),
+          _WaTile(
+            icon: WaIcons.premium,
+            title: 'Subscriptions',
+            subtitle: 'Explore premium benefits',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const PremiumScreen()),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.lock,
+            title: 'Linked devices',
+            subtitle: bridge.isLinked
+                ? 'Connected · ${bridge.connectionState}'
+                : 'Use WhatsApp on other devices',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ConnectScreen()),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.settings,
+            title: 'Account',
+            subtitle: 'Security notifications, change number',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.shield,
+            title: 'Privacy',
+            subtitle: 'Archive only · nothing written back to WhatsApp',
+            onTap: () {
+              showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: AppColors.surface,
+                  title: Text(
+                    'Privacy',
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
-                );
-              },
-            ),
-            const _SectionLabel('Account'),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  _Tile(
-                    icon: WaIcons.lock,
-                    title: 'Connect WhatsApp',
-                    subtitle: bridge.phone.isEmpty
-                        ? 'Enter your one WhatsApp number · ban risk'
-                        : bridge.isLinked
-                            ? '${bridge.phone} · linked (${bridge.connectionState})'
-                            : '${bridge.phone} · ${bridge.connectionState}',
-                    trailing: WaIcon(
-                      bridge.isLinked ? WaIcons.check : WaIcons.warning,
-                      size: 20,
-                      color: bridge.isLinked
-                          ? AppColors.accentBright
-                          : AppColors.warning,
-                      secondaryColor: bridge.isLinked
-                          ? AppColors.accentBright
-                          : AppColors.warning,
+                  content: Text(
+                    'Deleted copies stay inside WAMemory. '
+                    'Hidden notification text cannot be recovered. '
+                    'Not affiliated with WhatsApp / Meta.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('OK'),
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const ConnectScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _Tile(
-                    icon: WaIcons.premium,
-                    title: 'WAMemory Premium',
-                    subtitle: '\$5 / month · 7-day trial · 1 WhatsApp account',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const PremiumScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const _SectionLabel('Privacy & safety'),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  const _Tile(
-                    icon: WaIcons.shield,
-                    title: 'Archive only (Option A)',
-                    subtitle:
-                        'Deleted copies stay inside WAMemory. Nothing is written back into WhatsApp.',
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  const _Tile(
-                    icon: WaIcons.lock,
-                    title: 'Not affiliated with WhatsApp',
-                    subtitle:
-                        'Hidden notification text and missed alerts cannot be recovered.',
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _Tile(
-                    icon: WaIcons.warning,
-                    title: 'Two capture modes',
-                    subtitle:
-                        'Archive = Notification Access (safer). Live clone = Evolution Linked Device (ban risk).',
-                    onTap: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: AppColors.panel,
-                          title: const Text('Archive vs live clone'),
-                          content: const Text(
-                            'Path A archives WhatsApp notification text locally — lower risk.\n\n'
-                            'Path B (Connect WhatsApp) uses Evolution / Baileys Linked Device — '
-                            'unofficial. Meta may ban the number. Prefer a dedicated test account. '
-                            'No ban immunity.',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const _SectionLabel('Notifications'),
-            GlassPanel(
-              radius: 18,
-              child: _Tile(
-                icon: WaIcons.notify,
-                title: 'Notification access',
-                subtitle: archive.listenerEnabled
-                    ? 'Enabled — WhatsApp alerts are archived'
-                    : 'Required for auto-archive',
-                trailing: WaIcon(
-                  archive.listenerEnabled ? WaIcons.check : WaIcons.warning,
-                  size: 20,
-                  color: archive.listenerEnabled
-                      ? AppColors.accentBright
-                      : AppColors.warning,
-                  secondaryColor: archive.listenerEnabled
-                      ? AppColors.accentBright
-                      : AppColors.warning,
+                  ],
                 ),
-                onTap: () async {
-                  await archive.openNotificationSettings();
-                  await Future<void>.delayed(const Duration(seconds: 1));
-                  await archive.refreshListenerStatus();
-                },
-              ),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.archive,
+            title: 'Lists',
+            subtitle: 'Manage people and groups',
+            onTap: () => _showLinkedProfiles(context, archive),
+          ),
+          _WaTile(
+            icon: WaIcons.chats,
+            title: 'Chats',
+            subtitle: 'Chat history, backup, retention',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const RetentionScreen(),
+                ),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.image,
+            title: 'Appearance',
+            subtitle: _appearanceSubtitle(theme.mode),
+            onTap: () => _pickAppearance(context, theme),
+          ),
+          _WaTile(
+            icon: WaIcons.notify,
+            title: 'Broadcasts',
+            subtitle: 'Send updates to many contacts',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const BroadcastsScreen(),
+                ),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.lab,
+            title: 'Starred',
+            subtitle: 'Starred messages',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const StarredScreen()),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.notify,
+            title: 'Notification access',
+            subtitle: archive.listenerEnabled
+                ? 'Enabled — WhatsApp alerts are archived'
+                : 'Required for auto-archive',
+            trailing: WaIcon(
+              archive.listenerEnabled ? WaIcons.check : WaIcons.warning,
+              size: 20,
+              color: archive.listenerEnabled
+                  ? AppColors.accentBright
+                  : AppColors.warning,
+              secondaryColor: archive.listenerEnabled
+                  ? AppColors.accentBright
+                  : AppColors.warning,
             ),
-            const _SectionLabel('Storage'),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  _Tile(
-                    icon: WaIcons.storage,
-                    title: 'Local storage',
-                    subtitle:
-                        'SQLite on this device · ${archive.chats.length} chats · ${archive.deleted.length} deleted',
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _Tile(
-                    icon: WaIcons.archive,
-                    title: 'Retention',
-                    subtitle: '30 / 90 / 365 days — saved on device',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const RetentionScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+            onTap: () async {
+              await archive.openNotificationSettings();
+              await Future<void>.delayed(const Duration(seconds: 1));
+              await archive.refreshListenerStatus();
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.lab,
+            title: s.language,
+            subtitle: context.watch<LocaleController>().isRu
+                ? s.russian
+                : s.english,
+            onTap: () => _pickLanguage(context),
+          ),
+          _WaTile(
+            icon: WaIcons.info,
+            title: 'Help',
+            subtitle: 'Support, feedback, how it works',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const FeedbackScreen(),
+                ),
+              );
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+            child: Text(
+              'WAMemory $_appVersion',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
-            const _SectionLabel('Chats & profiles'),
-            GlassPanel(
-              radius: 18,
-              child: _Tile(
-                icon: WaIcons.chats,
-                title: 'Linked chat profiles',
-                subtitle:
-                    'Each archived contact keeps its own avatar colour and thread in Chats.',
-                onTap: () {
-                  _showLinkedProfiles(context, archive);
-                },
-              ),
-            ),
-            _SectionLabel(S.of(context).language),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  _Tile(
-                    icon: WaIcons.lab,
-                    title: S.of(context).english,
-                    subtitle: 'English',
-                    trailing: context.watch<LocaleController>().isRu
-                        ? null
-                        : const WaIcon(
-                            WaIcons.check,
-                            size: 20,
-                            color: AppColors.accentBright,
-                          ),
-                    onTap: () => context
-                        .read<LocaleController>()
-                        .setLocale(const Locale('en')),
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _Tile(
-                    icon: WaIcons.lab,
-                    title: S.of(context).russian,
-                    subtitle: 'Русский',
-                    trailing: context.watch<LocaleController>().isRu
-                        ? const WaIcon(
-                            WaIcons.check,
-                            size: 20,
-                            color: AppColors.accentBright,
-                          )
-                        : null,
-                    onTap: () => context
-                        .read<LocaleController>()
-                        .setLocale(const Locale('ru')),
-                  ),
-                ],
-              ),
-            ),
-            const _SectionLabel('Help'),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  _Tile(
-                    icon: WaIcons.info,
-                    title: 'How it works',
-                    subtitle:
-                        'WAMemory saves a copy when a WhatsApp notification arrives. If the sender deletes it later, the saved copy stays here.',
-                    onTap: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: AppColors.panel,
-                          title: const Text('How it works'),
-                          content: const Text(
-                            '1. Grant Notification Access.\n'
-                            '2. Keep WhatsApp notifications visible (not hidden text).\n'
-                            '3. New alerts are archived locally.\n'
-                            '4. If a message is deleted in WhatsApp, the copy remains in WAMemory.',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _Tile(
-                    icon: WaIcons.check,
-                    title: 'Support',
-                    subtitle: 'Send feedback — saved on this device',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const FeedbackScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const _SectionLabel('About'),
-            GlassPanel(
-              radius: 18,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            'assets/brand/wamemory_mark.png',
-                            width: 42,
-                            height: 42,
-                            errorBuilder: (_, __, ___) => const WaIcon(
-                              WaIcons.archive,
-                              size: 28,
-                              color: AppColors.accentBright,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'WAMemory',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Version $_appVersion · Android archive',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  const _Tile(
-                    icon: WaIcons.shield,
-                    title: 'Limits',
-                    subtitle:
-                        'Not affiliated with WhatsApp. One account on Premium. ~2 GB media quota planned.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  void _showLinkedProfiles(BuildContext context, ArchiveService archive) {
-    showModalBottomSheet<void>(
+  static String _appearanceSubtitle(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => 'Light',
+      ThemeMode.dark => 'Dark',
+      ThemeMode.system => 'System default',
+    };
+  }
+
+  static Future<void> _pickAppearance(
+    BuildContext context,
+    ThemeController theme,
+  ) async {
+    await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.panel,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Light', style: TextStyle(color: AppColors.textPrimary)),
+                trailing: theme.mode == ThemeMode.light
+                    ? WaIcon(
+                        WaIcons.check,
+                        size: 20,
+                        color: AppColors.accentBright,
+                      )
+                    : null,
+                onTap: () {
+                  theme.setMode(ThemeMode.light);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: Text('Dark', style: TextStyle(color: AppColors.textPrimary)),
+                trailing: theme.mode == ThemeMode.dark
+                    ? WaIcon(
+                        WaIcons.check,
+                        size: 20,
+                        color: AppColors.accentBright,
+                      )
+                    : null,
+                onTap: () {
+                  theme.setMode(ThemeMode.dark);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: Text(
+                  'System default',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                trailing: theme.mode == ThemeMode.system
+                    ? WaIcon(
+                        WaIcons.check,
+                        size: 20,
+                        color: AppColors.accentBright,
+                      )
+                    : null,
+                onTap: () {
+                  theme.setMode(ThemeMode.system);
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Future<void> _pickLanguage(BuildContext context) async {
+    final locale = context.read<LocaleController>();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) {
+        final s = S.of(context);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(s.english),
+                onTap: () {
+                  locale.setLocale(const Locale('en'));
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: Text(s.russian),
+                onTap: () {
+                  locale.setLocale(const Locale('ru'));
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static void _showLinkedProfiles(BuildContext context, ArchiveService archive) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (_) {
         final chats = archive.chats;
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
                   'Linked chat profiles',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  chats.isEmpty
-                      ? 'No archived chats yet. Profiles appear when notifications are saved.'
-                      : 'Each contact below is tied to its archive thread.',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
+              ),
+              if (chats.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'No chats yet',
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 320),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: chats.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: AppColors.divider),
-                    itemBuilder: (_, i) {
-                      final c = chats[i];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: AvatarCircle(
-                          name: c.title,
-                          colorHex: c.avatarColor,
-                          size: 44,
-                        ),
-                        title: Text(
-                          c.title,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          c.lastMessage ?? 'No preview',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    },
+                )
+              else
+                for (final c in chats.take(40))
+                  ListTile(
+                    leading: AvatarCircle(
+                      name: c.title,
+                      colorHex: c.avatarColor,
+                      size: 40,
+                    ),
+                    title: Text(
+                      c.title,
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                    subtitle: Text(
+                      c.peerPhone ?? (c.isGroup ? 'Group' : 'Chat'),
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   ),
-                ),
-              ],
-            ),
+            ],
           ),
         );
       },
@@ -444,149 +390,136 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({
     required this.profile,
     required this.phone,
-    required this.chatCount,
     required this.onEdit,
   });
 
   final ProfileStore profile;
   final String phone;
-  final int chatCount;
   final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      radius: 18,
-      child: InkWell(
-        onTap: onEdit,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
-          child: Row(
-            children: [
-              AvatarCircle(
-                name: profile.displayName,
-                colorHex: profile.avatarColor,
-                imagePath: profile.photoPath,
-                size: 64,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.displayName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
+    final name = profile.displayName.trim().isEmpty
+        ? 'Set your name'
+        : profile.displayName;
+    final about =
+        profile.about.trim().isEmpty ? "I'm feeling..." : profile.about;
+
+    return InkWell(
+      onTap: onEdit,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Row(
+          children: [
+            AvatarCircle(
+              name: name,
+              colorHex: profile.avatarColor,
+              imagePath: profile.photoPath,
+              size: 64,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.panel,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      about,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                  ),
+                  if (phone.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      profile.about,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      phone.isEmpty
-                          ? '$chatCount chats · tap to open profile'
-                          : '+$phone · $chatCount chats',
+                      phone.startsWith('+') ? phone : '+$phone',
                       style: TextStyle(
-                        color: AppColors.accentBright.withValues(alpha: 0.9),
+                        color: AppColors.textSecondary,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-              const WaIcon(
-                WaIcons.settings,
-                size: 20,
-                color: AppColors.textSecondary,
+            ),
+            IconButton(
+              onPressed: onEdit,
+              icon: WaIcon(
+                WaIcons.plus,
+                size: 22,
+                color: AppColors.accentBright,
+                secondaryColor: AppColors.accentBright,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.accent,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-}
-
-class _Tile extends StatelessWidget {
-  const _Tile({
+class _WaTile extends StatelessWidget {
+  const _WaTile({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.trailing,
     this.onTap,
+    this.trailing,
   });
 
   final WaIcons icon;
   final String title;
   final String subtitle;
-  final Widget? trailing;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.accent.withValues(alpha: 0.12),
-          border: Border.all(color: AppColors.glassBorder),
-        ),
-        alignment: Alignment.center,
-        child: WaIcon(icon, size: 20, color: AppColors.textPrimary),
-      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: WaIcon(icon, size: 24, color: AppColors.iconMuted),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
       ),
       trailing: trailing,
-      onTap: onTap,
     );
   }
 }

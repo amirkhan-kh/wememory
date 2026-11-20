@@ -27,7 +27,7 @@ class PremiumScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const WaIcon(
+                  WaIcon(
                     WaIcons.premium,
                     size: 40,
                     color: AppColors.accentBright,
@@ -36,7 +36,7 @@ class PremiumScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(
                     s.premiumHeadline,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -45,7 +45,7 @@ class PremiumScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     s.premiumBody,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       height: 1.4,
                     ),
@@ -66,7 +66,7 @@ class PremiumScreen extends StatelessWidget {
                             title: Text(s.premiumTitle),
                             content: Text(
                               s.premiumCheckoutSoon,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -119,7 +119,7 @@ class _Bullet extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: AppColors.textPrimary, height: 1.35),
+              style: TextStyle(color: AppColors.textPrimary, height: 1.35),
             ),
           ),
         ],

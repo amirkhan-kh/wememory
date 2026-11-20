@@ -87,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -98,8 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: ctrl,
                 maxLines: maxLines,
                 autofocus: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
                   labelStyle: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
@@ -159,8 +159,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: _busy ? null : () => _pickPhoto(profile),
-                      child: const Padding(
-                        padding: EdgeInsets.all(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
                         child: WaIcon(
                           WaIcons.camera,
                           size: 22,
@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'This photo is shown inside WAMemory. Linking WhatsApp uses Evolution (ban risk).',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onSave: (v) => profile.update(displayName: v),
                     ),
                   ),
-                  const Divider(height: 1, color: AppColors.divider),
+                  Divider(height: 1, color: AppColors.divider),
                   _Row(
                     icon: WaIcons.info,
                     label: 'About',
@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onSave: (v) => profile.update(about: v),
                     ),
                   ),
-                  const Divider(height: 1, color: AppColors.divider),
+                  Divider(height: 1, color: AppColors.divider),
                   _Row(
                     icon: WaIcons.lock,
                     label: 'Phone',
@@ -282,17 +282,17 @@ class _Row extends StatelessWidget {
       leading: WaIcon(icon, size: 22, color: AppColors.accentBright),
       title: Text(
         label,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
       ),
       subtitle: Text(
         value,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
       ),
-      trailing: const WaIcon(
+      trailing: WaIcon(
         WaIcons.settings,
         size: 18,
         color: AppColors.textSecondary,

@@ -32,7 +32,7 @@ class RetentionScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Text(
                 s.retentionBody,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
@@ -44,25 +44,25 @@ class RetentionScreen extends StatelessWidget {
                 children: [
                   for (var i = 0; i < _options.length; i++) ...[
                     if (i > 0)
-                      const Divider(height: 1, color: AppColors.divider),
+                      Divider(height: 1, color: AppColors.divider),
                     ListTile(
                       leading: const WaIcon(WaIcons.archive, size: 22),
                       title: Text(
                         s.retentionDays(_options[i]),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       subtitle: Text(
                         s.retentionHint,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
                       ),
                       trailing: shell.retentionDays == _options[i]
-                          ? const WaIcon(
+                          ? WaIcon(
                               WaIcons.check,
                               size: 20,
                               color: AppColors.accentBright,

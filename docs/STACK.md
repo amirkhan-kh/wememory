@@ -11,7 +11,9 @@ Product goal: WhatsApp-familiar client (chats, contacts, global search, send/rec
 | Capture / live path B | **Evolution API** (Baileys-based Linked Device) via NestJS proxy |
 | Local DB | SQLite via `sqflite` |
 | API | NestJS + TypeScript (`backend/`) |
-| WA bridge | Evolution API Docker (`deploy/evolution/`) — QR link, webhooks, sendText |
+| WA bridge | Evolution API via **Kiri** (`kdev up`, `deploy/evolution/`) — QR link, webhooks, sendText |
+| Local containers | **Kiri** + `kdev on` / `kdev up` (Docker Desktop emas) |
+| Contabo code | Git clone `amirkhan-kh/wememory-mobile` → `git pull` (no project Docker stack) |
 | Auth | JWT (Bearer) |
 | Billing (planned) | Lemon Squeezy / Paddle adapter |
 | Cloud media (planned) | Cloudflare R2 |
@@ -28,7 +30,9 @@ Folders: `wamemory/` · `backend/` · `docs/` · `scripts/` · `deploy/` · `.re
 | Analyze | `dart analyze` / `flutter analyze` | `wamemory/` |
 | API dev | `npm run start:dev` | `backend/` |
 | API build | `npm run build` | `backend/` |
-| Evolution (local) | `docker compose -f deploy/evolution/docker-compose.yml up -d` | root |
+| Containers (local) | `kdev on` → `kdev up` | root (Kiri) |
+| Evolution (local) | `kdev up` yoki `docker compose -f deploy/evolution/docker-compose.yml up -d` (Kiri context) | root |
+| Contabo sync | `./scripts/deploy-contabo.sh` yoki serverda `./scripts/server-update.sh` | root |
 | UI preview (no Flutter) | open `.research/ui-preview/index.html` | root |
 
 ## Risk (mandatory)

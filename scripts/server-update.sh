@@ -1,24 +1,19 @@
 #!/usr/bin/env bash
-# Run ON THE SERVER inside the checkout: pull latest code and restart the stack.
-# Usage: ~/projects/wamemory/scripts/server-update.sh
+# Contabo: pull latest from GitHub. No Docker restart (stack moved to local Kiri).
+# Run on the server inside the clone:
+#   ~/projects/wememory-mobile/scripts/server-update.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "→ git pull"
-git pull --ff-only
+echo "→ git fetch + pull (main)"
+git fetch origin
+git checkout main
+git pull --ff-only origin main
 
-if [[ ! -f deploy/.env ]]; then
-  echo "deploy/.env missing — copy deploy/.env.example and fill it in."
-  exit 2
-fi
-
-echo "→ docker compose up -d --build"
-cd deploy
-docker compose -p wamemory up -d --build
-
-echo "→ health"
-sleep 5
-PORT="$(grep -E '^HTTP_PORT=' .env | cut -d= -f2)"
-curl -fsS "http://127.0.0.1:${PORT:-80}/api/health" && echo
+echo "→ HEAD"
+git log -1 --oneline
+echo ""
+echo "Done. Local/dev runtime: Mac da kdev on && kdev up"
+echo "Serverda Docker stack bu loyiha uchun o‘chirilgan."

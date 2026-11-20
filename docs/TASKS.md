@@ -22,6 +22,9 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 1.10 Settings WA-layout + launcher icon + strict analyze
 
 ## Phase 2 — Contabo test demo
+- [x] 2.9 Light (screenshot WA) + Dark theme + Settings/Starred/Broadcasts shell
+- [x] 2.8 WA classic UI (no glass/aurora) + Search contacts/groups/channels + flutter test
+- [x] 2.7 Contabo wamemory tozalash (docker stack+papka) + `wememory-mobile` git clone + Kiri/kdev oqim
 - [x] 2.1 Serverga ko‘chirish — `13.140.202.159:~/projects/wamemory` (rsync, boshqa loyihalarga tegmagan)
 - [x] 2.2 `.env` serverda yaratildi (random JWT/DB parol, `chmod 600`, repoda yo‘q)
 - [x] 2.3 `docker compose -p wamemory up -d --build` → api + postgres + caddy running

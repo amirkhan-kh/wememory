@@ -11,7 +11,9 @@ import 'package:wamemory/core/services/archive_service.dart';
 import 'package:wamemory/core/services/profile_store.dart';
 import 'package:wamemory/core/services/wa_bridge_service.dart';
 import 'package:wamemory/core/services/wa_shell_store.dart';
+import 'package:wamemory/core/theme/app_colors.dart';
 import 'package:wamemory/core/theme/app_theme.dart';
+import 'package:wamemory/core/theme/theme_controller.dart';
 import 'package:wamemory/core/utils/phone_utils.dart';
 import 'package:wamemory/features/home/home_shell.dart';
 import 'package:wamemory/features/onboarding/onboarding_screen.dart';
@@ -63,13 +65,22 @@ Future<WaShellStore> _readyShell() async {
   return shell;
 }
 
+Future<ThemeController> _readyTheme() async {
+  final theme = ThemeController();
+  await theme.init();
+  await theme.setMode(ThemeMode.dark);
+  return theme;
+}
+
 Widget _homeWithProviders(
   ArchiveService archive,
   ProfileStore profile,
   WaBridgeService bridge,
   LocaleController locale,
   WaShellStore shell,
+  ThemeController theme,
 ) {
+  final themeCtrl = theme;
   return MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: archive),
@@ -77,13 +88,16 @@ Widget _homeWithProviders(
       ChangeNotifierProvider.value(value: bridge),
       ChangeNotifierProvider.value(value: shell),
       ChangeNotifierProvider.value(value: locale),
+      ChangeNotifierProvider.value(value: themeCtrl),
     ],
     child: LocaleControllerScope(
       controller: locale,
       child: AnimatedBuilder(
-        animation: locale,
+        animation: Listenable.merge([locale, themeCtrl]),
         builder: (context, _) => MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeCtrl.mode,
           locale: locale.locale,
           home: const HomeShell(),
         ),
@@ -103,6 +117,7 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    AppColors.apply(Brightness.dark);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_notifChannel, (call) async {
       if (call.method == 'isNotificationAccessEnabled') return false;
@@ -173,8 +188,11 @@ void main() {
         final bridge = await _readyBridge();
         final locale = await _readyLocale();
         final shell = await _readyShell();
+        final theme = await _readyTheme();
         await tester.pumpWidget(
-          _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
+          _wrap(
+            _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+          ),
         );
         await _pumpFrames(tester, 12);
 
@@ -204,7 +222,7 @@ void main() {
         expect(buttons, findsWidgets);
         await tester.tap(buttons.at(2));
         await _pumpFrames(tester, 12);
-        expect(find.text('Connect WhatsApp'), findsOneWidget);
+        expect(find.text('Linked devices'), findsOneWidget);
       });
 
       testWidgets('open chat thread shows bubbles + deleted badge', (tester) async {
@@ -213,8 +231,11 @@ void main() {
         final bridge = await _readyBridge();
         final locale = await _readyLocale();
         final shell = await _readyShell();
+        final theme = await _readyTheme();
         await tester.pumpWidget(
-          _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
+          _wrap(
+            _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+          ),
         );
         await _pumpFrames(tester, 12);
         await tester.tap(find.text('Flor Camden'));
@@ -236,6 +257,7 @@ void main() {
         final bridge = await _readyBridge();
         final locale = await _readyLocale();
         final shell = await _readyShell();
+        final theme = await _readyTheme();
         await tester.pumpWidget(
           _wrap(
             WAMemoryApp(
@@ -244,6 +266,7 @@ void main() {
               bridge: bridge,
               shell: shell,
               localeController: locale,
+              themeController: theme,
               showOnboarding: false,
             ),
           ),
@@ -260,6 +283,7 @@ void main() {
         final bridge = await _readyBridge(archive);
         final locale = await _readyLocale();
         final shell = await _readyShell();
+        final theme = await _readyTheme();
         await tester.pumpWidget(
           _wrap(
             WAMemoryApp(
@@ -268,6 +292,7 @@ void main() {
               bridge: bridge,
               shell: shell,
               localeController: locale,
+              themeController: theme,
               showOnboarding: false,
             ),
           ),
@@ -358,8 +383,11 @@ void main() {
       final bridge = await _readyBridge();
       final locale = await _readyLocale();
       final shell = await _readyShell();
+      final theme = await _readyTheme();
       await tester.pumpWidget(
-        _wrap(_homeWithProviders(archive, profile, bridge, locale, shell)),
+        _wrap(
+          _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+        ),
       );
       await _pumpFrames(tester, 10);
       await locale.setLocale(const Locale('ru'));

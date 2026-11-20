@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,151 +58,134 @@ class MessageBubble extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-          child: ClipRRect(
+          margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+          decoration: BoxDecoration(
+            color: bg,
             borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(out ? 16 : 4),
-              bottomRight: Radius.circular(out ? 4 : 16),
+              topLeft: const Radius.circular(8),
+              topRight: const Radius.circular(8),
+              bottomLeft: Radius.circular(out ? 8 : 2),
+              bottomRight: Radius.circular(out ? 2 : 8),
             ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: bg.withValues(alpha: out ? 0.92 : 0.78),
-                  border: Border.all(
-                    color: deleted
-                        ? AppColors.warning.withValues(alpha: 0.4)
-                        : AppColors.glassBorder,
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.10),
-                      Colors.white.withValues(alpha: 0.02),
-                    ],
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (deleted)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 6),
-                          child: Row(
-                            children: [
-                              WaIcon(
-                                WaIcons.deleted,
-                                size: 14,
-                                color: AppColors.warning,
-                                secondaryColor: AppColors.warning,
-                              ),
-                              SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  'Deleted · saved in WAMemory',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: AppColors.warning,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+            border: deleted
+                ? Border.all(color: AppColors.warning.withValues(alpha: 0.45))
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(9, 6, 9, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (deleted)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        WaIcon(
+                          WaIcons.deleted,
+                          size: 14,
+                          color: AppColors.warning,
+                          secondaryColor: AppColors.warning,
                         ),
-                      if (message.type == MessageType.voice ||
-                          message.type == MessageType.audio)
-                        _SavedMediaTile(
-                          label: message.type == MessageType.voice
-                              ? 'Voice message'
-                              : (message.body.startsWith('[')
-                                  ? 'Audio'
-                                  : message.body),
-                          icon: WaIcons.play,
-                          path: message.mediaPath,
-                          onOpen: () => _openMedia(context),
-                        )
-                      else if (message.type == MessageType.image)
-                        _ImagePreview(
-                          path: message.mediaPath,
-                          caption: message.body.startsWith('[')
-                              ? null
-                              : message.body,
-                          onOpen: () => _openMedia(context),
-                        )
-                      else if (message.type == MessageType.video)
-                        _SavedMediaTile(
-                          label: message.body.startsWith('[')
-                              ? 'Video'
-                              : message.body,
-                          icon: WaIcons.video,
-                          path: message.mediaPath,
-                          onOpen: () => _openMedia(context),
-                          tall: true,
-                        )
-                      else if (message.type == MessageType.document)
-                        _SavedMediaTile(
-                          label: message.body.startsWith('[')
-                              ? 'Document'
-                              : message.body,
-                          icon: WaIcons.document,
-                          path: message.mediaPath,
-                          onOpen: () => _openMedia(context),
-                        )
-                      else
-                        Text(
-                          message.body,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 15.5,
-                            height: 1.35,
-                            fontStyle:
-                                deleted ? FontStyle.italic : FontStyle.normal,
-                          ),
-                        ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (deleted && message.deletedAt != null) ...[
-                            Text(
-                              'del ${DateFormat.Hm().format(message.deletedAt!)}',
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          Text(
-                            DateFormat.Hm().format(message.timestamp),
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Deleted · saved in WAMemory',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.warning,
                               fontSize: 11,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          if (out) ...[
-                            const SizedBox(width: 4),
-                            const WaIcon(
-                              WaIcons.checkDouble,
-                              size: 14,
-                              color: AppColors.accentBright,
-                              secondaryColor: AppColors.accentBright,
-                            ),
-                          ],
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                if (message.type == MessageType.voice ||
+                    message.type == MessageType.audio)
+                  _SavedMediaTile(
+                    label: message.type == MessageType.voice
+                        ? 'Voice message'
+                        : (message.body.startsWith('[')
+                            ? 'Audio'
+                            : message.body),
+                    icon: WaIcons.play,
+                    path: message.mediaPath,
+                    onOpen: () => _openMedia(context),
+                  )
+                else if (message.type == MessageType.image)
+                  _ImagePreview(
+                    path: message.mediaPath,
+                    caption: message.body.startsWith('[')
+                        ? null
+                        : message.body,
+                    onOpen: () => _openMedia(context),
+                  )
+                else if (message.type == MessageType.video)
+                  _SavedMediaTile(
+                    label: message.body.startsWith('[')
+                        ? 'Video'
+                        : message.body,
+                    icon: WaIcons.video,
+                    path: message.mediaPath,
+                    onOpen: () => _openMedia(context),
+                    tall: true,
+                  )
+                else if (message.type == MessageType.document)
+                  _SavedMediaTile(
+                    label: message.body.startsWith('[')
+                        ? 'Document'
+                        : message.body,
+                    icon: WaIcons.document,
+                    path: message.mediaPath,
+                    onOpen: () => _openMedia(context),
+                  )
+                else
+                  Text(
+                    message.body,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15.5,
+                      height: 1.35,
+                      fontStyle:
+                          deleted ? FontStyle.italic : FontStyle.normal,
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (deleted && message.deletedAt != null) ...[
+                      Text(
+                        'del ${DateFormat.Hm().format(message.deletedAt!)}',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      DateFormat.Hm().format(message.timestamp),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                    if (out) ...[
+                      const SizedBox(width: 4),
+                      WaIcon(
+                        WaIcons.checkDouble,
+                        size: 14,
+                        color: AppColors.accentBright,
+                        secondaryColor: AppColors.accentBright,
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -247,7 +229,7 @@ class _ImagePreview extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             caption!,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14.5,
               height: 1.3,
@@ -326,7 +308,7 @@ class _SavedMediaTile extends StatelessWidget {
                       label,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -372,7 +354,7 @@ class _MediaPlaceholder extends StatelessWidget {
         children: [
           WaIcon(icon, size: 34, color: AppColors.textSecondary),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: AppColors.textSecondary)),
         ],
       ),
     );

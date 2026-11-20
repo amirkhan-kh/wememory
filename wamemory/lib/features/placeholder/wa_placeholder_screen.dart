@@ -39,7 +39,7 @@ class WaPlaceholderScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -49,7 +49,7 @@ class WaPlaceholderScreen extends StatelessWidget {
                   Text(
                     body,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 15,
                       height: 1.4,
@@ -58,7 +58,7 @@ class WaPlaceholderScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   Text(
                     S.of(context).comingSoon,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w600,
                     ),

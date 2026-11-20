@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _page = PageController();
   int _index = 0;
 
-  final _slides = const [
+  final _slides = [
     (
       WaIcons.lock,
       'Your chats. Your archive.',
@@ -54,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _finish,
-                  child: const Text(
+                  child: Text(
                     'Skip',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
@@ -101,7 +101,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             s.$2,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
@@ -112,7 +112,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             s.$3,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 15.5,
                               height: 1.45,
@@ -167,7 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     child: Text(
                       _index < _slides.length - 1 ? 'Continue' : 'Get started',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),

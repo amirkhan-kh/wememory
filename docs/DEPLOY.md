@@ -1,24 +1,22 @@
 # Deploy
 
-## Test demo (Contabo) — asosiy yo‘l
+## Contabo — git only
 
-To‘liq qadamlar: **`docs/CONTABO_DEPLOY.md`**
+To‘liq: **`docs/CONTABO_DEPLOY.md`**
 
-Qisqa:
+1. Push: `https://github.com/amirkhan-kh/wememory-mobile` → `main`
+2. Server: `cd ~/projects/wememory-mobile && ./scripts/server-update.sh`
+3. Yoki Mac: `./scripts/deploy-contabo.sh`
 
-1. Mac: Flutter → `./scripts/build-apk.sh`
-2. Mac: `./scripts/deploy-contabo.sh root@SERVER_IP`
-3. Server: `deploy/.env` (DOMAIN, JWT, DB password)
-4. Ochish: `https://DOMAIN/` → APK download + `/api/health`
+Contabo’da bu loyiha uchun Docker stack **yo‘q**. Dev runtime = **Kiri** (`kdev`).
 
-Stack fayllari: `deploy/docker-compose.yml`, `deploy/Caddyfile`, `deploy/web/`.
+## Lokal (Mac + Kiri)
 
-## Mobile (lokal)
-
-1. `./scripts/install-flutter-from-zip.sh`
-2. `./scripts/bootstrap-flutter.sh`
-3. `cd wamemory && flutter run`
+1. `kdev on`
+2. `kdev up` (compose fayllar bilan)
+3. Flutter: `cd wamemory && flutter run`
 4. Release APK: `./scripts/build-apk.sh`
+5. Kechqurun: `kdev night`
 
 ## Production keyinroq
 

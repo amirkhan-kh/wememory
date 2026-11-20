@@ -32,7 +32,7 @@ class CommunitiesScreen extends StatelessWidget {
           ),
           label: Text(
             s.newCommunity,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -49,7 +49,7 @@ class CommunitiesScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         s.communities,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -67,7 +67,7 @@ class CommunitiesScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Text(
                   s.communitiesBody,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     height: 1.35,
                   ),
@@ -81,7 +81,7 @@ class CommunitiesScreen extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const WaIcon(
+                              WaIcon(
                                 WaIcons.archive,
                                 size: 56,
                                 color: AppColors.accentBright,
@@ -91,7 +91,7 @@ class CommunitiesScreen extends StatelessWidget {
                               Text(
                                 s.noCommunities,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -101,7 +101,7 @@ class CommunitiesScreen extends StatelessWidget {
                               Text(
                                 s.noCommunitiesHint,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -112,7 +112,7 @@ class CommunitiesScreen extends StatelessWidget {
                     : ListView.separated(
                         padding: const EdgeInsets.only(bottom: 88),
                         itemCount: shell.communities.length,
-                        separatorBuilder: (_, __) => const Divider(
+                        separatorBuilder: (_, __) => Divider(
                           height: 1,
                           indent: 76,
                           color: AppColors.divider,
@@ -129,7 +129,7 @@ class CommunitiesScreen extends StatelessWidget {
                                 border: Border.all(color: AppColors.glassBorder),
                               ),
                               alignment: Alignment.center,
-                              child: const WaIcon(
+                              child: WaIcon(
                                 WaIcons.chats,
                                 size: 24,
                                 color: AppColors.accentBright,
@@ -137,14 +137,14 @@ class CommunitiesScreen extends StatelessWidget {
                             ),
                             title: Text(
                               c.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Text(
                               s.communityLocal,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),
@@ -152,7 +152,7 @@ class CommunitiesScreen extends StatelessWidget {
                             trailing: IconButton(
                               tooltip: s.delete,
                               onPressed: () => shell.removeCommunity(c.id),
-                              icon: const WaIcon(
+                              icon: WaIcon(
                                 WaIcons.deleted,
                                 size: 20,
                                 color: AppColors.textSecondary,
@@ -166,7 +166,7 @@ class CommunitiesScreen extends StatelessWidget {
                                   title: Text(c.name),
                                   content: Text(
                                     s.communityDetail,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -204,10 +204,10 @@ class CommunitiesScreen extends StatelessWidget {
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: s.communityNameHint,
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
+            hintStyle: TextStyle(color: AppColors.textSecondary),
           ),
         ),
         actions: [
