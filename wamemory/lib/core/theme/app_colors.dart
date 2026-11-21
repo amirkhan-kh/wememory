@@ -11,6 +11,12 @@ class AppColors {
     isLight = brightness == Brightness.light;
   }
 
+  /// Subscribe the calling widget to theme changes so static getters
+  /// re-evaluate on light/dark switch. Safe when no [ThemeScope] is present.
+  static void bind(BuildContext context) {
+    context.dependOnInheritedWidgetOfExactType<ThemeScope>();
+  }
+
   // —— surfaces ——
   static Color get bg =>
       isLight ? const Color(0xFFFFFFFF) : const Color(0xFF0B141A);
@@ -64,9 +70,20 @@ class AppColors {
   static const Color danger = Color(0xFFEA4335);
   static const Color warning = Color(0xFFF0AD4E);
 
+  /// Fallback under doodle wallpaper asset.
   static Color get chatWallpaper =>
-      isLight ? const Color(0xFFEFE7DD) : const Color(0xFF0B141A);
+      isLight ? const Color(0xFFEFEAE2) : const Color(0xFF0B141A);
 
   static Color get iconMuted =>
       isLight ? const Color(0xFF54656F) : const Color(0xFFAEBAC1);
+}
+
+/// Rebuilds every dependent (via [AppColors.bind]) when the theme
+/// controller notifies — fixes "only Settings turned light" bug.
+class ThemeScope extends InheritedNotifier<Listenable> {
+  const ThemeScope({
+    super.key,
+    required Listenable controller,
+    required super.child,
+  }) : super(notifier: controller);
 }

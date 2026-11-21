@@ -15,6 +15,7 @@ class DeletedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final archive = context.watch<ArchiveService>();
     final items = archive.deleted;
 

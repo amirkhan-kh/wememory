@@ -14,6 +14,7 @@ class CommunitiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.from(context.watch<LocaleController>());
     final shell = context.watch<WaShellStore>();
 

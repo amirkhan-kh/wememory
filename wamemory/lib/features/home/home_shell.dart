@@ -51,6 +51,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final locale = context.watch<LocaleController>();
     final s = S.from(locale);
     const pages = [

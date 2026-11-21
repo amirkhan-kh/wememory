@@ -15,6 +15,7 @@ class RetentionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.of(context);
     final shell = context.watch<WaShellStore>();
 

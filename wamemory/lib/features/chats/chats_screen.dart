@@ -25,6 +25,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final archive = context.watch<ArchiveService>();
     final s = S.from(context.watch<LocaleController>());
     final chats = archive.chats.where((c) {
@@ -316,6 +317,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Material(
       color: selected ? AppColors.accent.withValues(alpha: 0.22) : AppColors.panel,
       borderRadius: BorderRadius.circular(20),

@@ -29,6 +29,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final archive = context.watch<ArchiveService>();
     final contacts = archive.chats.where((c) {
       if (_query.isEmpty) return true;

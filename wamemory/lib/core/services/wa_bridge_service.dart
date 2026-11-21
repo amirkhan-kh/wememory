@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/app_config.dart';
 import '../utils/phone_utils.dart';
 import 'archive_service.dart';
 
@@ -106,11 +107,8 @@ class WaBridgeService extends ChangeNotifier {
   static const _keyPhone = 'wa_bridge_phone';
   static const _keySeq = 'wa_bridge_sync_seq';
   /// Override at build: `--dart-define=WAMEMORY_API_BASE=…`
-  /// Contabo test demo is the shareable default; local/emulator overrides via define.
-  static const defaultBaseUrl = String.fromEnvironment(
-    'WAMEMORY_API_BASE',
-    defaultValue: 'http://13.140.202.159:8090/api',
-  );
+  /// Contabo phone default — see `AppConfig` / `docs/PHONE_INSTALL.md`.
+  static const defaultBaseUrl = AppConfig.apiBase;
 
   final SharedPreferences? _prefsOverride;
   final http.Client _client;

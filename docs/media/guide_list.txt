@@ -1,0 +1,13 @@
+file 'guide_01.png'
+duration 2
+file 'guide_02.png'
+duration 2.5
+file 'guide_03.png'
+duration 2.5
+file 'guide_04.png'
+duration 2.5
+file 'guide_05.png'
+duration 2.5
+file 'guide_06.png'
+duration 2.5
+file 'guide_06.png'

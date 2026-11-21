@@ -47,6 +47,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.from(context.watch<LocaleController>());
     final shell = context.watch<WaShellStore>();
 

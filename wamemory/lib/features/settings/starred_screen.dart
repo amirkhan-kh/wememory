@@ -9,6 +9,7 @@ class StarredScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(

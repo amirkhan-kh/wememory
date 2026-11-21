@@ -107,6 +107,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final bridge = context.watch<WaBridgeService>();
 
     return SurrealBackground(

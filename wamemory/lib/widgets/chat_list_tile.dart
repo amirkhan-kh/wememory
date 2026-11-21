@@ -29,6 +29,7 @@ class ChatListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final unread = chat.unreadCount > 0;
     return InkWell(
       onTap: onTap,

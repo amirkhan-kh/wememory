@@ -14,6 +14,7 @@ import '../connect/connect_screen.dart';
 import '../help/feedback_screen.dart';
 import '../help/premium_screen.dart';
 import '../help/retention_screen.dart';
+import '../help/setup_guide_screen.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
 import 'broadcasts_screen.dart';
@@ -27,6 +28,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final archive = context.watch<ArchiveService>();
     final profile = context.watch<ProfileStore>();
     final bridge = context.watch<WaBridgeService>();
@@ -38,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.appBar,
         title: Text(
-          'Settings',
+          s.settings,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w500,
@@ -207,6 +209,18 @@ class SettingsScreen extends StatelessWidget {
           ),
           _WaTile(
             icon: WaIcons.info,
+            title: s.setupGuide,
+            subtitle: s.setupGuideSubtitle,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SetupGuideScreen(),
+                ),
+              );
+            },
+          ),
+          _WaTile(
+            icon: WaIcons.check,
             title: 'Help',
             subtitle: 'Support, feedback, how it works',
             onTap: () {
@@ -306,34 +320,37 @@ class SettingsScreen extends StatelessWidget {
 
   static Future<void> _pickLanguage(BuildContext context) async {
     final locale = context.read<LocaleController>();
-    await showModalBottomSheet<void>(
+    final chosen = await showModalBottomSheet<Locale>(
       context: context,
       backgroundColor: AppColors.surface,
       builder: (ctx) {
-        final s = S.of(context);
+        final s = S.of(ctx);
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: Text(s.english),
-                onTap: () {
-                  locale.setLocale(const Locale('en'));
-                  Navigator.pop(ctx);
-                },
+                title: Text(
+                  s.english,
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                onTap: () => Navigator.pop(ctx, const Locale('en')),
               ),
               ListTile(
-                title: Text(s.russian),
-                onTap: () {
-                  locale.setLocale(const Locale('ru'));
-                  Navigator.pop(ctx);
-                },
+                title: Text(
+                  s.russian,
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                onTap: () => Navigator.pop(ctx, const Locale('ru')),
               ),
             ],
           ),
         );
       },
     );
+    if (chosen != null) {
+      await locale.setLocale(chosen);
+    }
   }
 
   static void _showLinkedProfiles(BuildContext context, ArchiveService archive) {
@@ -403,6 +420,7 @@ class _ProfileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final name = profile.displayName.trim().isEmpty
         ? 'Set your name'
         : profile.displayName;
@@ -503,6 +521,7 @@ class _WaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),

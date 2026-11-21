@@ -44,6 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return SurrealBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,

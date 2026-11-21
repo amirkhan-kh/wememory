@@ -1,22 +1,33 @@
 # Deploy
 
-## Contabo — git only
+## Telefon + Contabo API
 
-To‘liq: **`docs/CONTABO_DEPLOY.md`**
+To‘liq: **`docs/PHONE_INSTALL.md`** · Contabo: **`docs/CONTABO_DEPLOY.md`**
 
-1. Push: `https://github.com/amirkhan-kh/wememory-mobile` → `main`
-2. Server: `cd ~/projects/wememory-mobile && ./scripts/server-update.sh`
-3. Yoki Mac: `./scripts/deploy-contabo.sh`
+| | |
+|--|--|
+| API | `http://13.140.202.159:8090/api` |
+| APK | `http://13.140.202.159:8090/download/wamemory-test.apk` |
+| Repo | `https://github.com/amirkhan-kh/wememory-mobile` |
 
-Contabo’da bu loyiha uchun Docker stack **yo‘q**. Dev runtime = **Kiri** (`kdev`).
+```bash
+# Mac
+git push origin main
+./scripts/build-apk.sh
+./scripts/deploy-contabo.sh
+rsync -az deploy/web/download/wamemory-test.apk \
+  adminamirdev@13.140.202.159:projects/wememory-mobile/deploy/web/download/
+```
+
+Server: `git pull` + `docker compose -p wamemory` (8090).  
+Lokal Mac: **Kiri** (`kdev on` → `kdev up`) — faqat dev.
 
 ## Lokal (Mac + Kiri)
 
 1. `kdev on`
-2. `kdev up` (compose fayllar bilan)
-3. Flutter: `cd wamemory && flutter run`
-4. Release APK: `./scripts/build-apk.sh`
-5. Kechqurun: `kdev night`
+2. `kdev up`
+3. `cd wamemory && flutter run`
+4. APK: `./scripts/build-apk.sh` (default Contabo API URL)
 
 ## Production keyinroq
 

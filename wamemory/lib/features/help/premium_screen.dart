@@ -11,6 +11,7 @@ class PremiumScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.of(context);
     return SurrealBackground(
       child: Scaffold(
@@ -102,6 +103,7 @@ class _Bullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(

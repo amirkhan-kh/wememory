@@ -34,6 +34,7 @@ class AvatarCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final path = imagePath;
     final file = path != null && path.isNotEmpty ? File(path) : null;
     final hasImage = file != null && file.existsSync();

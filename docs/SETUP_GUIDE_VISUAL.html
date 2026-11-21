@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAMemory — Setup guide</title>
+  <style>
+    :root {
+      --bg: #0B141A;
+      --panel: #1F2C34;
+      --accent: #00A884;
+      --bright: #25D366;
+      --text: #E9EDEF;
+      --muted: #8696A0;
+      --cream: #EFEAE2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(160deg, #070B10, #0B141A 40%, #111B21);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 28px 20px 12px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      color: var(--bright);
+      font-size: 28px;
+      letter-spacing: 0.5px;
+    }
+    header p { color: var(--muted); margin: 8px 0 0; }
+    .phone {
+      width: min(390px, 92vw);
+      margin: 16px auto 40px;
+      background: var(--panel);
+      border-radius: 28px;
+      border: 1px solid #2A3942;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    }
+    .bar {
+      background: #111B21;
+      padding: 14px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid #222D34;
+    }
+    .slide {
+      display: none;
+      padding: 20px 18px 24px;
+      min-height: 420px;
+      background:
+        radial-gradient(ellipse at top, rgba(0,168,132,.12), transparent 55%),
+        var(--bg);
+    }
+    .slide.active { display: block; }
+    .badge {
+      display: inline-block;
+      background: rgba(37,211,102,.18);
+      color: var(--bright);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    h2 { margin: 0 0 10px; font-size: 20px; }
+    p.body { color: var(--muted); line-height: 1.45; margin: 0 0 16px; }
+    .mock {
+      background: #202C33;
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid #2A3942;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .mock strong { color: var(--bright); }
+    .nav {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 0 0 28px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.ghost {
+      background: transparent;
+      border: 1px solid #2A3942;
+      color: var(--text);
+    }
+    .dots { text-align: center; margin-top: 8px; }
+    .dots span {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #2A3942;
+      margin: 0 3px;
+    }
+    .dots span.on { background: var(--bright); }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding-bottom: 32px;
+    }
+    code {
+      background: #111B21;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--cream);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WAMemory</h1>
+    <p>Setup guide · phone + in-app · EN / RU</p>
+  </header>
+
+  <div class="phone">
+    <div class="bar">Setup guide</div>
+
+    <section class="slide active" data-i="0">
+      <div class="badge">STEP 1</div>
+      <h2>Install APK</h2>
+      <p class="body">Download from Contabo and allow unknown sources.</p>
+      <div class="mock">
+        Open<br/>
+        <strong>http://13.140.202.159:8090/download/wamemory-test.apk</strong>
+      </div>
+    </section>
+
+    <section class="slide" data-i="1">
+      <div class="badge">STEP 2</div>
+      <h2>Notification Access</h2>
+      <p class="body">Path A archive — enable WAMemory in Android notification access.</p>
+      <div class="mock">Settings → <strong>Notification access</strong> → WAMemory ON</div>
+    </section>
+
+    <section class="slide" data-i="2">
+      <div class="badge">STEP 3</div>
+      <h2>Profile</h2>
+      <p class="body">Set name / photo / phone inside WAMemory only.</p>
+      <div class="mock">Settings → Account / profile</div>
+    </section>
+
+    <section class="slide" data-i="3">
+      <div class="badge">STEP 4</div>
+      <h2>API URL</h2>
+      <p class="body">Needed for Linked devices / Connect.</p>
+      <div class="mock"><code>http://13.140.202.159:8090/api</code></div>
+    </section>
+
+    <section class="slide" data-i="4">
+      <div class="badge">STEP 5</div>
+      <h2>Connect WhatsApp</h2>
+      <p class="body">Optional Path B — ban risk. Prefer a test number.</p>
+      <div class="mock">Settings → <strong>Linked devices</strong> → QR / pairing</div>
+    </section>
+
+    <section class="slide" data-i="5">
+      <div class="badge">STEP 6</div>
+      <h2>Theme & language</h2>
+      <p class="body">Appearance Light/Dark · Language English/Русский.</p>
+      <div class="mock">No crash on Русский — MaterialLocalizations enabled</div>
+    </section>
+
+    <section class="slide" data-i="6">
+      <div class="badge">STEP 7</div>
+      <h2>Verify</h2>
+      <p class="body">Send a WhatsApp message to yourself. It should appear in Chats.</p>
+      <div class="mock">Deleted copies stay in <strong>Deleted</strong> inside WAMemory</div>
+    </section>
+  </div>
+
+  <div class="dots" id="dots"></div>
+  <div class="nav">
+    <button class="ghost" id="prev">Back</button>
+    <button id="next">Next</button>
+    <button class="ghost" id="play">Auto play</button>
+  </div>
+  <footer>WAMemory design · deep night #0B141A · accent #00A884 / #25D366</footer>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const dots = document.getElementById('dots');
+    let i = 0, timer = null;
+    slides.forEach((_, idx) => {
+      const s = document.createElement('span');
+      if (idx === 0) s.classList.add('on');
+      dots.appendChild(s);
+    });
+    function show(n) {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((el, idx) => el.classList.toggle('active', idx === i));
+      [...dots.children].forEach((d, idx) => d.classList.toggle('on', idx === i));
+    }
+    document.getElementById('prev').onclick = () => show(i - 1);
+    document.getElementById('next').onclick = () => show(i + 1);
+    document.getElementById('play').onclick = () => {
+      if (timer) { clearInterval(timer); timer = null; return; }
+      timer = setInterval(() => show(i + 1), 2200);
+    };
+  </script>
+</body>
+</html>

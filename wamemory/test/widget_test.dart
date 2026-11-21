@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wamemory/features/help/setup_guide_screen.dart';
+import 'package:wamemory/features/settings/settings_screen.dart';
 import 'package:wamemory/core/db/memory_store.dart';
 import 'package:wamemory/core/l10n/app_strings.dart';
 import 'package:wamemory/core/l10n/locale_controller.dart';
@@ -99,6 +102,16 @@ Widget _homeWithProviders(
           darkTheme: AppTheme.dark,
           themeMode: themeCtrl.mode,
           locale: locale.locale,
+          supportedLocales: const [Locale('en'), Locale('ru')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) => ThemeScope(
+            controller: themeCtrl,
+            child: child ?? const SizedBox.shrink(),
+          ),
           home: const HomeShell(),
         ),
       ),
@@ -396,6 +409,144 @@ void main() {
       await locale.setLocale(const Locale('en'));
       await _pumpFrames(tester, 10);
       expect(find.text('Chats'), findsWidgets);
+    });
+  });
+
+  group('QA settings + locale MaterialLocalizations', () {
+    Future<void> _openSettings(WidgetTester tester) async {
+      await tester.tap(find.byType(IconButton).at(2));
+      await _pumpFrames(tester, 12);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    }
+
+    Future<void> _navPop(WidgetTester tester) async {
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+      nav.pop();
+      await _pumpFrames(tester, 10);
+    }
+
+    for (var round = 1; round <= 5; round++) {
+      testWidgets('round $round settings RU/EN + AppBar ok', (tester) async {
+        final archive = await _readyArchive();
+        final profile = await _readyProfile();
+        final bridge = await _readyBridge();
+        final locale = await _readyLocale();
+        final shell = await _readyShell();
+        final theme = await _readyTheme();
+        await tester.pumpWidget(
+          _wrap(
+            _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+          ),
+        );
+        await _pumpFrames(tester, 10);
+        await _openSettings(tester);
+        expect(tester.takeException(), isNull);
+
+        for (var i = 0; i < 2; i++) {
+          await locale.setLocale(const Locale('ru'));
+          await _pumpFrames(tester, 10);
+          expect(tester.takeException(), isNull);
+          expect(find.text('Настройки'), findsWidgets);
+
+          await locale.setLocale(const Locale('en'));
+          await _pumpFrames(tester, 10);
+          expect(tester.takeException(), isNull);
+          expect(find.text('Settings'), findsWidgets);
+        }
+
+        // Push guide directly (avoids scroll flakiness).
+        final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+        nav.push(MaterialPageRoute<void>(builder: (_) => const SetupGuideScreen()));
+        await _pumpFrames(tester, 12);
+        expect(find.byType(SetupGuideScreen), findsOneWidget);
+        expect(find.textContaining('Notification Access'), findsOneWidget);
+
+        await locale.setLocale(const Locale('ru'));
+        await _pumpFrames(tester, 12);
+        expect(tester.takeException(), isNull);
+        expect(find.text('Инструкция'), findsWidgets);
+
+        await _navPop(tester);
+        await _navPop(tester);
+        expect(find.text('Чаты'), findsWidgets);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('theme toggle repaints all tabs (not only Settings)',
+        (tester) async {
+      final archive = await _readyArchive();
+      final profile = await _readyProfile();
+      final bridge = await _readyBridge();
+      final locale = await _readyLocale();
+      final shell = await _readyShell();
+      final theme = await _readyTheme();
+      await tester.pumpWidget(
+        _wrap(
+          _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+        ),
+      );
+      await _pumpFrames(tester, 8);
+
+      Color scaffoldBg() =>
+          tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor!;
+
+      for (var i = 0; i < 5; i++) {
+        await theme.setMode(ThemeMode.light);
+        await _pumpFrames(tester, 8);
+        expect(tester.takeException(), isNull);
+        expect(scaffoldBg(), const Color(0xFFFFFFFF),
+            reason: 'Chats scaffold must turn white in light mode');
+
+        await theme.setMode(ThemeMode.dark);
+        await _pumpFrames(tester, 8);
+        expect(tester.takeException(), isNull);
+        expect(scaffoldBg(), const Color(0xFF0B141A),
+            reason: 'Chats scaffold must return to WA dark');
+      }
+
+      // Switch tabs under light and verify each tab background.
+      await theme.setMode(ThemeMode.light);
+      await _pumpFrames(tester, 8);
+      for (final tab in ['Updates', 'Communities', 'Calls', 'Chats']) {
+        await tester.tap(find.text(tab).last);
+        await _pumpFrames(tester, 8);
+        expect(tester.takeException(), isNull);
+        final scaffolds = tester.widgetList<Scaffold>(find.byType(Scaffold));
+        for (final s in scaffolds) {
+          final bg = s.backgroundColor;
+          if (bg == null || bg == Colors.transparent) continue;
+          expect(bg, isNot(const Color(0xFF0B141A)),
+              reason: '$tab still dark in light mode');
+        }
+      }
+    });
+
+    testWidgets('theme light/dark ×5 with settings open', (tester) async {
+      final archive = await _readyArchive();
+      final profile = await _readyProfile();
+      final bridge = await _readyBridge();
+      final locale = await _readyLocale();
+      final shell = await _readyShell();
+      final theme = await _readyTheme();
+      await tester.pumpWidget(
+        _wrap(
+          _homeWithProviders(archive, profile, bridge, locale, shell, theme),
+        ),
+      );
+      await _pumpFrames(tester, 8);
+      await _openSettings(tester);
+      for (var i = 0; i < 5; i++) {
+        await theme.setMode(ThemeMode.light);
+        AppColors.apply(Brightness.light);
+        await _pumpFrames(tester, 6);
+        expect(tester.takeException(), isNull);
+        await theme.setMode(ThemeMode.dark);
+        AppColors.apply(Brightness.dark);
+        await _pumpFrames(tester, 6);
+        expect(tester.takeException(), isNull);
+      }
+      expect(find.byType(SettingsScreen), findsOneWidget);
     });
   });
 }

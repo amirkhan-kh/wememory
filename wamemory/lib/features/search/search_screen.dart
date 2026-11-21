@@ -112,6 +112,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final archive = context.watch<ArchiveService>();
     final bridge = context.watch<WaBridgeService>();
     final shell = context.watch<WaShellStore>();
@@ -290,6 +291,7 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -337,6 +339,7 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
       child: Text(
@@ -366,6 +369,7 @@ class _ResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),

@@ -19,6 +19,7 @@ class CallsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.from(context.watch<LocaleController>());
     final shell = context.watch<WaShellStore>();
     final archive = context.watch<ArchiveService>();
@@ -279,6 +280,7 @@ class _FavouritesEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     if (chats.isEmpty) {
       return Center(
         child: Padding(

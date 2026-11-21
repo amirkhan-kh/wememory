@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 
-/// Premium dual-tone vector icons (not Material defaults / not emoji).
+/// WhatsApp-like outline icons (custom vectors — not Material / not emoji).
 enum WaIcons {
   chats,
   chatsFilled,
@@ -54,8 +54,9 @@ class WaIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = color ?? AppColors.textSecondary;
-    final secondary = secondaryColor ?? AppColors.accentBright;
+    AppColors.bind(context);
+    final primary = color ?? AppColors.iconMuted;
+    final secondary = secondaryColor ?? AppColors.accent;
     final child = CustomPaint(
       size: Size.square(size),
       painter: _WaIconPainter(
@@ -69,9 +70,8 @@ class WaIcon extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: secondary.withValues(alpha: 0.35),
-            blurRadius: size * 0.55,
-            spreadRadius: 0,
+            color: secondary.withValues(alpha: 0.28),
+            blurRadius: size * 0.45,
           ),
         ],
       ),
@@ -100,7 +100,7 @@ class _WaIconPainter extends CustomPainter {
     final stroke = Paint()
       ..color = primary
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.7
+      ..strokeWidth = 1.55
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true;
@@ -113,7 +113,7 @@ class _WaIconPainter extends CustomPainter {
     final accent = Paint()
       ..color = secondary
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.7
+      ..strokeWidth = 1.55
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true;
@@ -125,471 +125,448 @@ class _WaIconPainter extends CustomPainter {
 
     switch (icon) {
       case WaIcons.chats:
+        _chatBubble(canvas, stroke, filled: false);
       case WaIcons.chatsFilled:
-        _chats(canvas, stroke, fill, accentFill, icon == WaIcons.chatsFilled);
-        break;
+        _chatBubble(canvas, fill, filled: true);
       case WaIcons.deleted:
       case WaIcons.deletedFilled:
-        _deleted(canvas, stroke, fill, accent, icon == WaIcons.deletedFilled);
-        break;
+        _trash(canvas, stroke, fill, icon == WaIcons.deletedFilled);
       case WaIcons.settings:
       case WaIcons.settingsFilled:
-        _settings(canvas, stroke, fill, accentFill, icon == WaIcons.settingsFilled);
-        break;
+        _gear(canvas, stroke, fill, icon == WaIcons.settingsFilled);
       case WaIcons.search:
-        _search(canvas, stroke, accent);
-        break;
+        _search(canvas, stroke);
       case WaIcons.more:
-        _more(canvas, fill, accentFill);
-        break;
+        _more(canvas, fill);
       case WaIcons.notify:
-        _notify(canvas, stroke, accentFill);
-        break;
+        _bell(canvas, stroke);
       case WaIcons.lock:
-        _lock(canvas, stroke, accent);
-        break;
+        _lock(canvas, stroke);
       case WaIcons.send:
-        _send(canvas, fill, accentFill);
-        break;
+        _send(canvas, accentFill);
       case WaIcons.plus:
-        _plus(canvas, stroke, accent);
-        break;
+        _plus(canvas, stroke);
       case WaIcons.camera:
-        _camera(canvas, stroke, accent);
-        break;
+        _camera(canvas, stroke);
       case WaIcons.call:
-        _call(canvas, stroke, accent);
-        break;
+        _call(canvas, stroke);
       case WaIcons.video:
-        _video(canvas, stroke, accent);
-        break;
+        _video(canvas, stroke);
       case WaIcons.checkDouble:
-        _checkDouble(canvas, accent);
-        break;
+        _checks(canvas, accent);
       case WaIcons.play:
-        _play(canvas, fill, accentFill);
-        break;
+        _play(canvas, fill);
       case WaIcons.image:
-        _image(canvas, stroke, accent);
-        break;
+        _image(canvas, stroke);
       case WaIcons.document:
-        _document(canvas, stroke, accent);
-        break;
+        _doc(canvas, stroke);
       case WaIcons.refresh:
-        _refresh(canvas, stroke, accentFill);
-        break;
+        _refresh(canvas, stroke);
       case WaIcons.lab:
-        _lab(canvas, stroke, accentFill);
-        break;
+        _star(canvas, stroke); // starred-style
       case WaIcons.storage:
-        _storage(canvas, stroke, accent);
-        break;
+        _storage(canvas, stroke);
       case WaIcons.premium:
-        _premium(canvas, stroke, accentFill);
-        break;
+        _diamond(canvas, stroke);
       case WaIcons.info:
-        _info(canvas, stroke, accentFill);
-        break;
+        _info(canvas, stroke, fill);
       case WaIcons.shield:
-        _shield(canvas, stroke, accent);
-        break;
+        _shield(canvas, stroke);
       case WaIcons.warning:
-        _warning(canvas, stroke, accentFill);
-        break;
+        _warning(canvas, stroke, fill);
       case WaIcons.check:
         _check(canvas, accent);
-        break;
       case WaIcons.archive:
-        _archive(canvas, stroke, accentFill);
-        break;
+        _archive(canvas, stroke);
     }
 
     canvas.restore();
   }
 
-  void _chats(Canvas c, Paint stroke, Paint fill, Paint accentFill, bool filled) {
-    final a = Path()
-      ..moveTo(5, 7.5)
-      ..cubicTo(5, 5.5, 6.6, 4, 8.8, 4)
-      ..lineTo(13.5, 4)
-      ..cubicTo(15.7, 4, 17.2, 5.5, 17.2, 7.5)
-      ..lineTo(17.2, 11.2)
-      ..cubicTo(17.2, 13.2, 15.7, 14.7, 13.5, 14.7)
-      ..lineTo(10.2, 14.7)
-      ..lineTo(7.4, 17.2)
-      ..lineTo(7.8, 14.7)
-      ..lineTo(8.8, 14.7)
-      ..cubicTo(6.6, 14.7, 5, 13.2, 5, 11.2)
+  /// Classic WA chat bubble with bottom-left tail.
+  void _chatBubble(Canvas c, Paint paint, {required bool filled}) {
+    final p = Path()
+      ..moveTo(6.5, 5.2)
+      ..cubicTo(5.2, 5.2, 4.2, 6.3, 4.2, 7.7)
+      ..lineTo(4.2, 13.6)
+      ..cubicTo(4.2, 15.0, 5.2, 16.1, 6.5, 16.1)
+      ..lineTo(8.2, 16.1)
+      ..lineTo(6.6, 19.0)
+      ..lineTo(11.4, 16.1)
+      ..lineTo(17.5, 16.1)
+      ..cubicTo(18.8, 16.1, 19.8, 15.0, 19.8, 13.6)
+      ..lineTo(19.8, 7.7)
+      ..cubicTo(19.8, 6.3, 18.8, 5.2, 17.5, 5.2)
       ..close();
     if (filled) {
-      c.drawPath(
-        a,
-        Paint()
-          ..color = primary.withValues(alpha: 0.92)
-          ..style = PaintingStyle.fill
-          ..isAntiAlias = true,
-      );
+      c.drawPath(p, paint);
     } else {
-      c.drawPath(a, stroke);
+      c.drawPath(p, paint);
     }
-    final b = Path()
-      ..moveTo(10.2, 9.2)
-      ..cubicTo(10.2, 8.1, 11.1, 7.2, 12.4, 7.2)
-      ..lineTo(16.2, 7.2)
-      ..cubicTo(17.6, 7.2, 18.6, 8.2, 18.6, 9.5)
-      ..lineTo(18.6, 12.2)
-      ..cubicTo(18.6, 13.5, 17.6, 14.5, 16.2, 14.5)
-      ..lineTo(14.4, 14.5)
-      ..lineTo(16.6, 17)
-      ..lineTo(15.8, 14.5)
-      ..cubicTo(14.4, 14.5, 13.4, 13.5, 13.4, 12.2);
-    c.drawPath(b, filled ? accentFill : stroke);
-    // memory spark
-    c.drawCircle(const Offset(19.2, 5.2), 1.15, accentFill);
   }
 
-  void _deleted(Canvas c, Paint stroke, Paint fill, Paint accent, bool filled) {
+  void _trash(Canvas c, Paint stroke, Paint fill, bool filled) {
     final body = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(7, 8.5, 10, 11),
-      const Radius.circular(2.2),
+      const Rect.fromLTWH(7.2, 8.8, 9.6, 10.2),
+      const Radius.circular(1.6),
     );
     if (filled) {
-      c.drawRRect(
-        body,
-        Paint()
-          ..color = primary.withValues(alpha: 0.9)
-          ..style = PaintingStyle.fill
-          ..isAntiAlias = true,
-      );
+      c.drawRRect(body, fill);
     } else {
       c.drawRRect(body, stroke);
     }
-    c.drawLine(const Offset(6, 8.5), const Offset(18, 8.5), stroke);
-    c.drawLine(const Offset(9.5, 6.2), const Offset(14.5, 6.2), stroke);
-    c.drawLine(const Offset(10.2, 11.2), const Offset(10.2, 16.5), accent);
-    c.drawLine(const Offset(13.8, 11.2), const Offset(13.8, 16.5), accent);
+    c.drawLine(const Offset(6.2, 8.8), const Offset(17.8, 8.8), stroke);
+    c.drawLine(const Offset(9.4, 6.6), const Offset(14.6, 6.6), stroke);
+    c.drawLine(const Offset(10.4, 11.4), const Offset(10.4, 16.6), stroke);
+    c.drawLine(const Offset(13.6, 11.4), const Offset(13.6, 16.6), stroke);
   }
 
-  void _settings(Canvas c, Paint stroke, Paint fill, Paint accentFill, bool filled) {
-    final cx = 12.0, cy = 12.0, r = 3.1;
+  /// WhatsApp-style cog: closed outline with 8 teeth + centre hole.
+  void _gear(Canvas c, Paint stroke, Paint fill, bool filled) {
+    const cx = 12.0, cy = 12.0, ro = 9.0, ri = 7.0, teeth = 8;
+    const step = 2 * math.pi / teeth;
+    const tw = step * 0.20; // half-width of tooth top
+    const sl = step * 0.07; // tooth slope
+    final p = Path();
+    for (var i = 0; i < teeth; i++) {
+      final a = i * step - math.pi / 2;
+      final pts = <Offset>[
+        Offset(cx + math.cos(a - tw) * ro, cy + math.sin(a - tw) * ro),
+        Offset(cx + math.cos(a + tw) * ro, cy + math.sin(a + tw) * ro),
+        Offset(
+          cx + math.cos(a + tw + sl) * ri,
+          cy + math.sin(a + tw + sl) * ri,
+        ),
+        Offset(
+          cx + math.cos(a + step - tw - sl) * ri,
+          cy + math.sin(a + step - tw - sl) * ri,
+        ),
+      ];
+      if (i == 0) {
+        p.moveTo(pts[0].dx, pts[0].dy);
+      } else {
+        p.lineTo(pts[0].dx, pts[0].dy);
+      }
+      p.lineTo(pts[1].dx, pts[1].dy);
+      p.lineTo(pts[2].dx, pts[2].dy);
+      p.lineTo(pts[3].dx, pts[3].dy);
+    }
+    p.close();
     if (filled) {
-      c.drawCircle(Offset(cx, cy), r, accentFill);
-    } else {
-      c.drawCircle(Offset(cx, cy), r, stroke);
-    }
-    for (var i = 0; i < 8; i++) {
-      final a = (i / 8) * math.pi * 2 - math.pi / 2;
-      final p1 = Offset(cx + math.cos(a) * 5.2, cy + math.sin(a) * 5.2);
-      final p2 = Offset(cx + math.cos(a) * 8.4, cy + math.sin(a) * 8.4);
-      final tooth = Path()
-        ..moveTo(p1.dx + math.cos(a + 0.35) * 1.1, p1.dy + math.sin(a + 0.35) * 1.1)
-        ..lineTo(p2.dx + math.cos(a + 0.22) * 1.4, p2.dy + math.sin(a + 0.22) * 1.4)
-        ..lineTo(p2.dx + math.cos(a - 0.22) * 1.4, p2.dy + math.sin(a - 0.22) * 1.4)
-        ..lineTo(p1.dx + math.cos(a - 0.35) * 1.1, p1.dy + math.sin(a - 0.35) * 1.1)
-        ..close();
-      c.drawPath(
-        tooth,
-        filled
-            ? (Paint()
-              ..color = primary.withValues(alpha: 0.92)
-              ..style = PaintingStyle.fill
-              ..isAntiAlias = true)
-            : stroke,
+      c.drawPath(p, fill);
+      c.drawCircle(
+        const Offset(cx, cy),
+        2.6,
+        Paint()
+          ..color = AppColors.appBar
+          ..style = PaintingStyle.fill
+          ..isAntiAlias = true,
       );
+    } else {
+      c.drawPath(p, stroke);
+      c.drawCircle(const Offset(cx, cy), 2.6, stroke);
     }
   }
 
-  void _search(Canvas c, Paint stroke, Paint accent) {
-    c.drawCircle(const Offset(10.5, 10.5), 5.2, stroke);
-    c.drawLine(const Offset(14.4, 14.4), const Offset(19, 19), accent);
+  void _search(Canvas c, Paint stroke) {
+    c.drawCircle(const Offset(10.6, 10.6), 5.0, stroke);
+    c.drawLine(const Offset(14.3, 14.3), const Offset(19.0, 19.0), stroke);
   }
 
-  void _more(Canvas c, Paint fill, Paint accentFill) {
-    c.drawCircle(const Offset(12, 6.5), 1.35, fill);
-    c.drawCircle(const Offset(12, 12), 1.35, accentFill);
-    c.drawCircle(const Offset(12, 17.5), 1.35, fill);
+  void _more(Canvas c, Paint fill) {
+    c.drawCircle(const Offset(12, 6.2), 1.35, fill);
+    c.drawCircle(const Offset(12, 12), 1.35, fill);
+    c.drawCircle(const Offset(12, 17.8), 1.35, fill);
   }
 
-  void _notify(Canvas c, Paint stroke, Paint accentFill) {
+  void _bell(Canvas c, Paint stroke) {
     final p = Path()
-      ..moveTo(7, 14)
-      ..lineTo(7, 11)
-      ..cubicTo(7, 7.8, 9.1, 5.5, 12, 5.5)
-      ..cubicTo(14.9, 5.5, 17, 7.8, 17, 11)
-      ..lineTo(17, 14)
-      ..lineTo(19, 16.2)
-      ..lineTo(5, 16.2)
+      ..moveTo(7.2, 13.8)
+      ..lineTo(7.2, 10.6)
+      ..cubicTo(7.2, 7.6, 9.2, 5.4, 12, 5.4)
+      ..cubicTo(14.8, 5.4, 16.8, 7.6, 16.8, 10.6)
+      ..lineTo(16.8, 13.8)
+      ..lineTo(18.6, 16.0)
+      ..lineTo(5.4, 16.0)
       ..close();
     c.drawPath(p, stroke);
-    c.drawArc(const Rect.fromLTWH(9.4, 16.2, 5.2, 3.2), 0, math.pi, false, stroke);
-    c.drawCircle(const Offset(16.8, 7.2), 1.6, accentFill);
+    c.drawArc(
+      const Rect.fromLTWH(9.6, 16.0, 4.8, 3.0),
+      0,
+      math.pi,
+      false,
+      stroke,
+    );
   }
 
-  void _lock(Canvas c, Paint stroke, Paint accent) {
+  void _lock(Canvas c, Paint stroke) {
     c.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(6.5, 11, 11, 9),
+        const Rect.fromLTWH(6.8, 11.0, 10.4, 8.2),
+        const Radius.circular(2.0),
+      ),
+      stroke,
+    );
+    c.drawArc(
+      const Rect.fromLTWH(8.4, 5.4, 7.2, 7.6),
+      math.pi,
+      math.pi,
+      false,
+      stroke,
+    );
+  }
+
+  void _send(Canvas c, Paint fill) {
+    // WA paper-plane pointing up-right
+    final p = Path()
+      ..moveTo(4.2, 11.6)
+      ..lineTo(19.6, 5.0)
+      ..lineTo(12.2, 12.0)
+      ..lineTo(19.6, 19.0)
+      ..close();
+    c.drawPath(p, fill);
+  }
+
+  void _plus(Canvas c, Paint stroke) {
+    c.drawLine(const Offset(12, 6.5), const Offset(12, 17.5), stroke);
+    c.drawLine(const Offset(6.5, 12), const Offset(17.5, 12), stroke);
+  }
+
+  void _camera(Canvas c, Paint stroke) {
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(4.2, 8.0, 15.6, 10.4),
         const Radius.circular(2.4),
       ),
       stroke,
     );
-    c.drawArc(const Rect.fromLTWH(8.2, 5.2, 7.6, 8), math.pi, math.pi, false, accent);
-    c.drawCircle(const Offset(12, 15.2), 1.2, accent);
+    c.drawCircle(const Offset(12, 13.2), 3.2, stroke);
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(9.2, 6.4, 4.2, 2.0),
+        const Radius.circular(0.8),
+      ),
+      stroke,
+    );
   }
 
-  void _send(Canvas c, Paint fill, Paint accentFill) {
+  /// Classic telephone handset (WA call).
+  void _call(Canvas c, Paint stroke) {
     final p = Path()
-      ..moveTo(4.5, 12)
-      ..lineTo(19.5, 5.5)
-      ..lineTo(13.2, 12)
-      ..lineTo(19.5, 18.5)
+      ..moveTo(7.0, 4.8)
+      ..cubicTo(7.8, 4.4, 8.8, 4.8, 9.2, 5.6)
+      ..lineTo(10.4, 8.6)
+      ..cubicTo(10.7, 9.3, 10.5, 10.1, 9.9, 10.5)
+      ..lineTo(8.6, 11.3)
+      ..cubicTo(9.5, 13.4, 11.2, 15.1, 13.4, 16.0)
+      ..lineTo(14.2, 14.7)
+      ..cubicTo(14.6, 14.1, 15.4, 13.9, 16.1, 14.2)
+      ..lineTo(19.0, 15.4)
+      ..cubicTo(19.8, 15.8, 20.1, 16.8, 19.7, 17.6)
+      ..cubicTo(18.6, 19.8, 15.8, 20.6, 13.4, 19.8)
+      ..cubicTo(8.2, 18.0, 4.6, 14.2, 3.4, 8.8)
+      ..cubicTo(2.8, 6.4, 4.2, 4.0, 7.0, 4.8)
       ..close();
-    c.drawPath(p, accentFill);
-    c.drawLine(const Offset(13.2, 12), const Offset(4.5, 12), fill);
+    c.drawPath(p, stroke);
   }
 
-  void _plus(Canvas c, Paint stroke, Paint accent) {
-    c.drawCircle(const Offset(12, 12), 8.2, stroke);
-    c.drawLine(const Offset(12, 7.5), const Offset(12, 16.5), accent);
-    c.drawLine(const Offset(7.5, 12), const Offset(16.5, 12), accent);
-  }
-
-  void _camera(Canvas c, Paint stroke, Paint accent) {
+  void _video(Canvas c, Paint stroke) {
     c.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(4.5, 8, 15, 11),
-        const Radius.circular(2.6),
-      ),
-      stroke,
-    );
-    c.drawCircle(const Offset(12, 13.5), 3.1, accent);
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(9, 6.2, 4.2, 2.2),
-        const Radius.circular(1),
-      ),
-      stroke,
-    );
-  }
-
-  void _call(Canvas c, Paint stroke, Paint accent) {
-    final p = Path()
-      ..moveTo(7.2, 5.8)
-      ..lineTo(9.6, 5.8)
-      ..cubicTo(10.2, 5.8, 10.7, 6.2, 10.9, 6.8)
-      ..lineTo(11.7, 9.2)
-      ..cubicTo(11.9, 9.8, 11.7, 10.4, 11.2, 10.7)
-      ..lineTo(9.8, 11.6)
-      ..cubicTo(10.6, 13.4, 12.1, 14.9, 14, 15.7)
-      ..lineTo(14.9, 14.3)
-      ..cubicTo(15.2, 13.8, 15.8, 13.6, 16.4, 13.8)
-      ..lineTo(18.8, 14.6)
-      ..cubicTo(19.4, 14.8, 19.8, 15.3, 19.8, 15.9)
-      ..lineTo(19.8, 18.2)
-      ..cubicTo(19.8, 19, 19.1, 19.6, 18.3, 19.4)
-      ..cubicTo(11.2, 17.6, 6, 12.4, 4.2, 5.3)
-      ..cubicTo(4, 4.5, 4.6, 3.8, 5.4, 3.8)
-      ..lineTo(7.2, 3.8);
-    c.drawPath(p, accent);
-  }
-
-  void _video(Canvas c, Paint stroke, Paint accent) {
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(3.8, 7.5, 11.5, 9),
-        const Radius.circular(2.2),
+        const Rect.fromLTWH(3.6, 7.6, 11.2, 8.8),
+        const Radius.circular(2.0),
       ),
       stroke,
     );
     final tri = Path()
-      ..moveTo(16, 10)
-      ..lineTo(20.2, 7.8)
-      ..lineTo(20.2, 16.2)
-      ..lineTo(16, 14)
+      ..moveTo(15.4, 9.6)
+      ..lineTo(20.2, 7.2)
+      ..lineTo(20.2, 16.8)
+      ..lineTo(15.4, 14.4)
       ..close();
-    c.drawPath(tri, accent);
+    c.drawPath(tri, stroke);
   }
 
-  void _checkDouble(Canvas c, Paint accent) {
-    final p1 = Path()
-      ..moveTo(4, 12.2)
-      ..lineTo(7.2, 15.4)
-      ..lineTo(13.5, 8.2);
-    c.drawPath(p1, accent);
-    final p2 = Path()
-      ..moveTo(9.2, 12.2)
-      ..lineTo(12.4, 15.4)
-      ..lineTo(20, 7.5);
-    c.drawPath(p2, accent);
+  void _checks(Canvas c, Paint paint) {
+    final a = Path()
+      ..moveTo(3.8, 12.2)
+      ..lineTo(7.0, 15.4)
+      ..lineTo(13.2, 8.0);
+    c.drawPath(a, paint);
+    final b = Path()
+      ..moveTo(9.0, 12.2)
+      ..lineTo(12.2, 15.4)
+      ..lineTo(20.0, 7.4);
+    c.drawPath(b, paint);
   }
 
-  void _play(Canvas c, Paint fill, Paint accentFill) {
+  void _play(Canvas c, Paint fill) {
     final p = Path()
-      ..moveTo(9, 7.2)
-      ..lineTo(17.2, 12)
-      ..lineTo(9, 16.8)
+      ..moveTo(9.0, 7.0)
+      ..lineTo(17.4, 12.0)
+      ..lineTo(9.0, 17.0)
       ..close();
-    c.drawPath(p, accentFill);
+    c.drawPath(p, fill);
   }
 
-  void _image(Canvas c, Paint stroke, Paint accent) {
+  void _image(Canvas c, Paint stroke) {
     c.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(4.5, 6, 15, 12),
-        const Radius.circular(2.4),
+        const Rect.fromLTWH(4.4, 6.2, 15.2, 11.6),
+        const Radius.circular(2.2),
       ),
       stroke,
     );
-    c.drawCircle(const Offset(9, 10), 1.5, accent);
-    final mountain = Path()
-      ..moveTo(5.8, 16.5)
-      ..lineTo(10.2, 12.2)
+    c.drawCircle(const Offset(9.0, 10.2), 1.4, stroke);
+    final m = Path()
+      ..moveTo(5.6, 16.4)
+      ..lineTo(10.0, 12.2)
       ..lineTo(12.8, 14.4)
-      ..lineTo(15.6, 11.5)
-      ..lineTo(18.5, 16.5);
-    c.drawPath(mountain, accent);
+      ..lineTo(15.6, 11.4)
+      ..lineTo(18.6, 16.4);
+    c.drawPath(m, stroke);
   }
 
-  void _document(Canvas c, Paint stroke, Paint accent) {
+  void _doc(Canvas c, Paint stroke) {
     final p = Path()
-      ..moveTo(8, 4.5)
-      ..lineTo(14.2, 4.5)
-      ..lineTo(18, 8.4)
-      ..lineTo(18, 19.5)
-      ..lineTo(8, 19.5)
+      ..moveTo(8.0, 4.4)
+      ..lineTo(14.0, 4.4)
+      ..lineTo(17.8, 8.4)
+      ..lineTo(17.8, 19.4)
+      ..lineTo(8.0, 19.4)
       ..close();
     c.drawPath(p, stroke);
-    c.drawLine(const Offset(14.2, 4.5), const Offset(14.2, 8.4), stroke);
-    c.drawLine(const Offset(14.2, 8.4), const Offset(18, 8.4), stroke);
-    c.drawLine(const Offset(10.2, 12), const Offset(15.8, 12), accent);
-    c.drawLine(const Offset(10.2, 14.8), const Offset(15.8, 14.8), accent);
+    c.drawLine(const Offset(14.0, 4.4), const Offset(14.0, 8.4), stroke);
+    c.drawLine(const Offset(14.0, 8.4), const Offset(17.8, 8.4), stroke);
+    c.drawLine(const Offset(10.2, 12.0), const Offset(15.6, 12.0), stroke);
+    c.drawLine(const Offset(10.2, 14.8), const Offset(15.6, 14.8), stroke);
   }
 
-  void _refresh(Canvas c, Paint stroke, Paint accentFill) {
-    c.drawArc(const Rect.fromLTWH(5, 5, 14, 14), -0.9, 4.2, false, stroke);
+  void _refresh(Canvas c, Paint stroke) {
+    c.drawArc(const Rect.fromLTWH(5.2, 5.2, 13.6, 13.6), -1.0, 4.4, false, stroke);
     final tip = Path()
-      ..moveTo(16.8, 4.2)
-      ..lineTo(19.4, 7.2)
-      ..lineTo(15.2, 7.6)
+      ..moveTo(16.6, 4.0)
+      ..lineTo(19.4, 7.0)
+      ..lineTo(15.0, 7.4)
       ..close();
-    c.drawPath(tip, accentFill);
-  }
-
-  void _lab(Canvas c, Paint stroke, Paint accentFill) {
-    c.drawLine(const Offset(9, 4.5), const Offset(9, 10), stroke);
-    c.drawLine(const Offset(15, 4.5), const Offset(15, 10), stroke);
-    c.drawLine(const Offset(8, 4.5), const Offset(16, 4.5), stroke);
-    final flask = Path()
-      ..moveTo(9, 10)
-      ..lineTo(6.2, 17.5)
-      ..cubicTo(5.9, 18.4, 6.5, 19.4, 7.5, 19.4)
-      ..lineTo(16.5, 19.4)
-      ..cubicTo(17.5, 19.4, 18.1, 18.4, 17.8, 17.5)
-      ..lineTo(15, 10);
-    c.drawPath(flask, stroke);
-    c.drawCircle(const Offset(11.2, 16.2), 1.1, accentFill);
-    c.drawCircle(const Offset(14.2, 15.2), 0.8, accentFill);
-  }
-
-  void _storage(Canvas c, Paint stroke, Paint accent) {
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(5, 5, 14, 4.2),
-        const Radius.circular(1.6),
-      ),
-      stroke,
-    );
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(5, 10, 14, 4.2),
-        const Radius.circular(1.6),
-      ),
-      stroke,
-    );
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(5, 15, 14, 4.2),
-        const Radius.circular(1.6),
-      ),
-      accent,
+    c.drawPath(
+      tip,
+      Paint()
+        ..color = stroke.color
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true,
     );
   }
 
-  void _premium(Canvas c, Paint stroke, Paint accentFill) {
-    final crown = Path()
-      ..moveTo(5, 16.5)
-      ..lineTo(5.5, 9)
-      ..lineTo(9.2, 12.5)
-      ..lineTo(12, 6.5)
-      ..lineTo(14.8, 12.5)
-      ..lineTo(18.5, 9)
-      ..lineTo(19, 16.5)
-      ..close();
-    c.drawPath(crown, stroke);
-    c.drawCircle(const Offset(12, 6.2), 1.1, accentFill);
-  }
-
-  void _info(Canvas c, Paint stroke, Paint accentFill) {
-    c.drawCircle(const Offset(12, 12), 8, stroke);
-    c.drawCircle(const Offset(12, 8.2), 1.05, accentFill);
-    c.drawLine(const Offset(12, 11), const Offset(12, 16.5), stroke);
-  }
-
-  void _shield(Canvas c, Paint stroke, Paint accent) {
-    final p = Path()
-      ..moveTo(12, 3.8)
-      ..lineTo(18.5, 6.5)
-      ..lineTo(18.5, 12.2)
-      ..cubicTo(18.5, 16.5, 15.2, 19.6, 12, 20.5)
-      ..cubicTo(8.8, 19.6, 5.5, 16.5, 5.5, 12.2)
-      ..lineTo(5.5, 6.5)
-      ..close();
+  void _star(Canvas c, Paint stroke) {
+    // 5-point star — WA starred messages
+    const cx = 12.0, cy = 12.0, r = 7.2, ri = 3.0;
+    final p = Path();
+    for (var i = 0; i < 10; i++) {
+      final ang = -math.pi / 2 + i * math.pi / 5;
+      final rad = i.isEven ? r : ri;
+      final x = cx + math.cos(ang) * rad;
+      final y = cy + math.sin(ang) * rad;
+      if (i == 0) {
+        p.moveTo(x, y);
+      } else {
+        p.lineTo(x, y);
+      }
+    }
+    p.close();
     c.drawPath(p, stroke);
-    c.drawLine(const Offset(9, 12.2), const Offset(11.2, 14.4), accent);
-    c.drawLine(const Offset(11.2, 14.4), const Offset(15.4, 9.6), accent);
   }
 
-  void _warning(Canvas c, Paint stroke, Paint accentFill) {
+  void _storage(Canvas c, Paint stroke) {
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(5.0, 5.0, 14.0, 4.0),
+        const Radius.circular(1.4),
+      ),
+      stroke,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(5.0, 10.0, 14.0, 4.0),
+        const Radius.circular(1.4),
+      ),
+      stroke,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(5.0, 15.0, 14.0, 4.0),
+        const Radius.circular(1.4),
+      ),
+      stroke,
+    );
+  }
+
+  void _diamond(Canvas c, Paint stroke) {
+    // WA-ish subscriptions diamond
     final p = Path()
       ..moveTo(12, 4.2)
-      ..lineTo(20.2, 18.8)
-      ..lineTo(3.8, 18.8)
+      ..lineTo(19.2, 12)
+      ..lineTo(12, 19.8)
+      ..lineTo(4.8, 12)
       ..close();
     c.drawPath(p, stroke);
-    c.drawLine(const Offset(12, 9.2), const Offset(12, 13.8), stroke);
-    c.drawCircle(const Offset(12, 16.2), 0.9, accentFill);
+    c.drawLine(const Offset(8.2, 10.2), const Offset(12, 7.2), stroke);
+    c.drawLine(const Offset(12, 7.2), const Offset(15.8, 10.2), stroke);
   }
 
-  void _check(Canvas c, Paint accent) {
+  void _info(Canvas c, Paint stroke, Paint fill) {
+    c.drawCircle(const Offset(12, 12), 7.6, stroke);
+    c.drawCircle(const Offset(12, 8.2), 1.0, fill);
+    c.drawLine(const Offset(12, 11.0), const Offset(12, 16.4), stroke);
+  }
+
+  void _shield(Canvas c, Paint stroke) {
     final p = Path()
-      ..moveTo(5.5, 12.2)
-      ..lineTo(10, 16.5)
-      ..lineTo(18.5, 7.5);
-    c.drawPath(p, accent);
+      ..moveTo(12, 3.8)
+      ..lineTo(18.4, 6.4)
+      ..lineTo(18.4, 12.0)
+      ..cubicTo(18.4, 16.2, 15.2, 19.2, 12, 20.2)
+      ..cubicTo(8.8, 19.2, 5.6, 16.2, 5.6, 12.0)
+      ..lineTo(5.6, 6.4)
+      ..close();
+    c.drawPath(p, stroke);
   }
 
-  void _archive(Canvas c, Paint stroke, Paint accentFill) {
+  void _warning(Canvas c, Paint stroke, Paint fill) {
+    final p = Path()
+      ..moveTo(12, 4.4)
+      ..lineTo(20.0, 18.6)
+      ..lineTo(4.0, 18.6)
+      ..close();
+    c.drawPath(p, stroke);
+    c.drawLine(const Offset(12, 9.4), const Offset(12, 13.8), stroke);
+    c.drawCircle(const Offset(12, 16.2), 0.85, fill);
+  }
+
+  void _check(Canvas c, Paint paint) {
+    final p = Path()
+      ..moveTo(5.4, 12.2)
+      ..lineTo(10.0, 16.6)
+      ..lineTo(18.6, 7.4);
+    c.drawPath(p, paint);
+  }
+
+  void _archive(Canvas c, Paint stroke) {
     c.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(4.5, 5, 15, 4),
-        const Radius.circular(1.8),
+        const Rect.fromLTWH(4.6, 5.0, 14.8, 3.8),
+        const Radius.circular(1.4),
       ),
       stroke,
     );
     c.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(5.5, 9, 13, 10.5),
-        const Radius.circular(1.8),
+        const Rect.fromLTWH(5.6, 8.8, 12.8, 10.2),
+        const Radius.circular(1.4),
       ),
       stroke,
     );
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(9.5, 12.2, 5, 2.2),
-        const Radius.circular(1),
-      ),
-      accentFill,
-    );
+    c.drawLine(const Offset(9.6, 12.6), const Offset(14.4, 12.6), stroke);
   }
 
   @override

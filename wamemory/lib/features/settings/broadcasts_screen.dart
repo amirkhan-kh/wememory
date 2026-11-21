@@ -9,6 +9,7 @@ class BroadcastsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final now = DateTime.now();
     final range =
         '01 ${_mon(now.month)} - ${_lastDay(now)} ${_mon(now.month)}';

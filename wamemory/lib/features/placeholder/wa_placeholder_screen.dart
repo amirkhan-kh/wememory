@@ -20,6 +20,7 @@ class WaPlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return SurrealBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,

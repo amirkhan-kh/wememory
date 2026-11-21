@@ -45,6 +45,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final out = message.isOutgoing;
     final deleted = message.isDeleted;
     final bg = deleted
@@ -202,6 +203,7 @@ class _ImagePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final file = path != null && path!.isNotEmpty ? File(path!) : null;
     final has = file != null && file.existsSync();
     return Column(
@@ -258,6 +260,7 @@ class _SavedMediaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final has = path != null && path!.isNotEmpty && File(path!).existsSync();
     final sizeLabel = () {
       if (!has) return 'Waiting for file…';
@@ -341,6 +344,7 @@ class _MediaPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Container(
       width: 220,
       height: 120,

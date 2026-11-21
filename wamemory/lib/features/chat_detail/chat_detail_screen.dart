@@ -13,6 +13,7 @@ import '../../core/services/wa_bridge_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/phone_utils.dart';
 import '../../widgets/avatar_circle.dart';
+import '../../widgets/chat_wallpaper.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/wa_icons.dart';
 import '../calls/calls_screen.dart';
@@ -372,6 +373,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.of(context);
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -441,16 +443,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _loading
-                ? Center(
-                    child: CircularProgressIndicator(color: AppColors.accent),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, i) =>
-                        MessageBubble(message: _messages[i]),
-                  ),
+            child: ChatWallpaper(
+              child: _loading
+                  ? Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, i) =>
+                          MessageBubble(message: _messages[i]),
+                    ),
+            ),
           ),
           if (_sendingMedia)
             LinearProgressIndicator(
@@ -548,6 +552,7 @@ class _ComposerBarState extends State<_ComposerBar> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return SafeArea(
       top: false,
       child: Padding(

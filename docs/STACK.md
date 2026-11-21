@@ -13,7 +13,8 @@ Product goal: WhatsApp-familiar client (chats, contacts, global search, send/rec
 | API | NestJS + TypeScript (`backend/`) |
 | WA bridge | Evolution API via **Kiri** (`kdev up`, `deploy/evolution/`) — QR link, webhooks, sendText |
 | Local containers | **Kiri** + `kdev on` / `kdev up` (Docker Desktop emas) |
-| Contabo code | Git clone `amirkhan-kh/wememory-mobile` → `git pull` (no project Docker stack) |
+| Contabo phone API | Git clone `wememory-mobile` → `./scripts/server-update.sh` (`docker compose -p wamemory`, port **8090**) |
+| Phone API URL | `http://13.140.202.159:8090/api` (`WAMEMORY_API_BASE` in `build-apk.sh`) |
 | Auth | JWT (Bearer) |
 | Billing (planned) | Lemon Squeezy / Paddle adapter |
 | Cloud media (planned) | Cloudflare R2 |
@@ -32,7 +33,9 @@ Folders: `wamemory/` · `backend/` · `docs/` · `scripts/` · `deploy/` · `.re
 | API build | `npm run build` | `backend/` |
 | Containers (local) | `kdev on` → `kdev up` | root (Kiri) |
 | Evolution (local) | `kdev up` yoki `docker compose -f deploy/evolution/docker-compose.yml up -d` (Kiri context) | root |
-| Contabo sync | `./scripts/deploy-contabo.sh` yoki serverda `./scripts/server-update.sh` | root |
+| Contabo deploy | `./scripts/deploy-contabo.sh` (git pull + compose up) | root |
+| Phone APK | `./scripts/build-apk.sh` → Contabo `/download/` | root |
+| Phone guide | `docs/PHONE_INSTALL.md` | docs |
 | UI preview (no Flutter) | open `.research/ui-preview/index.html` | root |
 
 ## Risk (mandatory)

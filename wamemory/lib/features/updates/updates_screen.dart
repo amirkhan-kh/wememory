@@ -19,6 +19,7 @@ class UpdatesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final s = S.from(context.watch<LocaleController>());
     final profile = context.watch<ProfileStore>();
     final shell = context.watch<WaShellStore>();

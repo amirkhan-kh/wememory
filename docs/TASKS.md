@@ -22,6 +22,11 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 1.10 Settings WA-layout + launcher icon + strict analyze
 
 ## Phase 2 — Contabo test demo
+- [x] 2.14 ThemeScope: light/dark whole app + dark wallpaper + gear icon
+- [x] 2.13 Fix RU MaterialLocalizations + Setup guide + QA locale tests ×5
+- [x] 2.12 Wallpaper palette retint + WaIcons WA-like redraw
+- [x] 2.11 Chat wallpaper light/dark assets from Desktop images.jpeg
+- [x] 2.10 Phone Contabo API URL + server-update compose + PHONE_INSTALL.md
 - [x] 2.9 Light (screenshot WA) + Dark theme + Settings/Starred/Broadcasts shell
 - [x] 2.8 WA classic UI (no glass/aurora) + Search contacts/groups/channels + flutter test
 - [x] 2.7 Contabo wamemory tozalash (docker stack+papka) + `wememory-mobile` git clone + Kiri/kdev oqim

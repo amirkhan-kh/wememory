@@ -128,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final profile = context.watch<ProfileStore>();
     final bridge = context.watch<WaBridgeService>();
     final phone = profile.phone.isNotEmpty ? profile.phone : bridge.phone;
@@ -278,6 +279,7 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return ListTile(
       leading: WaIcon(icon, size: 22, color: AppColors.accentBright),
       title: Text(

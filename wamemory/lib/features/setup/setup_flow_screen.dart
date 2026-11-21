@@ -124,6 +124,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     final profile = context.watch<ProfileStore>();
     return SurrealBackground(
       child: Scaffold(
@@ -191,6 +192,7 @@ class _PhoneStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -237,6 +239,7 @@ class _NameStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -278,6 +281,7 @@ class _AboutStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -326,6 +330,7 @@ class _PhotoStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppColors.bind(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(

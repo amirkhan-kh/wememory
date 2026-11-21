@@ -166,6 +166,54 @@ class S {
       _ru ? 'Очистить локальный чат' : 'Clear local chat';
   String get callFromChat => _ru ? 'Позвонить' : 'Call';
   String get videoCallFromChat => _ru ? 'Видеозвонок' : 'Video call';
+
+  // Setup guide
+  String get setupGuide => _ru ? 'Инструкция' : 'Setup guide';
+  String get setupGuideSubtitle => _ru
+      ? 'Как настроить телефон и WAMemory'
+      : 'How to set up your phone and WAMemory';
+  String get setupGuideIntro => _ru
+      ? 'После установки выполните эти шаги. Архив работает на этом телефоне; API нужен для Connect.'
+      : 'After install, follow these steps. Archive runs on this phone; API is needed for Connect.';
+  String get setupStep1Title =>
+      _ru ? '1. Установите APK' : '1. Install the APK';
+  String get setupStep1Body => _ru
+      ? 'Скачайте APK с Contabo страницы загрузки и разрешите установку из неизвестных источников.'
+      : 'Download the APK from the Contabo download page and allow install from unknown sources.';
+  String get setupStep2Title =>
+      _ru ? '2. Доступ к уведомлениям' : '2. Notification Access';
+  String get setupStep2Body => _ru
+      ? 'Settings → Notification access → включите WAMemory. Так WhatsApp сообщения архивируются (Path A).'
+      : 'Settings → Notification access → enable WAMemory. This archives WhatsApp alerts (Path A).';
+  String get setupStep3Title =>
+      _ru ? '3. Профиль' : '3. Your profile';
+  String get setupStep3Body => _ru
+      ? 'Settings → Account / профиль: имя, фото, номер. Это только внутри WAMemory.'
+      : 'Settings → Account / profile: name, photo, phone. Shown only inside WAMemory.';
+  String get setupStep4Title =>
+      _ru ? '4. API URL (Connect)' : '4. API URL (Connect)';
+  String get setupStep4Body => _ru
+      ? 'Settings → Linked devices. API по умолчанию: http://13.140.202.159:8090/api. Contabo API должен быть online.'
+      : 'Settings → Linked devices. Default API: http://13.140.202.159:8090/api. Contabo API must be online.';
+  String get setupStep5Title =>
+      _ru ? '5. Connect WhatsApp (опционально)' : '5. Connect WhatsApp (optional)';
+  String get setupStep5Body => _ru
+      ? 'Path B (Evolution) — неофициально, риск бана. Лучше тестовый номер. QR / код сопряжения.'
+      : 'Path B (Evolution) is unofficial — ban risk. Prefer a test number. Use QR / pairing code.';
+  String get setupStep6Title =>
+      _ru ? '6. Тема и язык' : '6. Theme and language';
+  String get setupStep6Body => _ru
+      ? 'Settings → Appearance (Light/Dark). Settings → Язык (English / Русский).'
+      : 'Settings → Appearance (Light/Dark). Settings → Language (English / Русский).';
+  String get setupStep7Title =>
+      _ru ? '7. Проверка' : '7. Verify';
+  String get setupStep7Body => _ru
+      ? 'Отправьте себе WhatsApp сообщение. Оно должно появиться в Чатах. Удалённые — во вкладке Deleted.'
+      : 'Send yourself a WhatsApp message. It should appear in Chats. Deleted ones stay under Deleted.';
+  String get setupOpenNotifications =>
+      _ru ? 'Открыть доступ к уведомлениям' : 'Open notification access';
+  String get setupOpenConnect =>
+      _ru ? 'Открыть Linked devices' : 'Open Linked devices';
 }
 
 /// Inherited access to [LocaleController].
