@@ -22,6 +22,7 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 1.10 Settings WA-layout + launcher icon + strict analyze
 
 ## Phase 2 — Contabo test demo
+- [x] 2.15 Kiri local up → Contabo server-update → kdev done (Mac off, server alone)
 - [x] 2.14 ThemeScope: light/dark whole app + dark wallpaper + gear icon
 - [x] 2.13 Fix RU MaterialLocalizations + Setup guide + QA locale tests ×5
 - [x] 2.12 Wallpaper palette retint + WaIcons WA-like redraw
@@ -64,3 +65,4 @@ Batafsil: `docs/ROADMAP.md`
 - [x] 5.12 Install AVD system-image android-36 + boot Pixel_7 + install release APK (MainActivity focus, no crash)
 - [x] 5.13 WA shell: Updates/Communities/Calls real screens · Settings dead taps · chat more/call menus · Playwright QR scan · flutter test 28/28 (AVD install deferred: host free_ram ~1.2GB)
 - [x] 5.14 Contabo sync: yangi APK (141M) + code/API deploy · health 200 (`adminamirdev@13.140.202.159`)
+- [x] 5.15 APK parse failed fix — release 0.1.3 ~35MB + Contabo MATCH (debug 141MB truncate)

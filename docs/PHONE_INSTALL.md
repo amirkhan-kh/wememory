@@ -58,12 +58,14 @@ rsync -az deploy/web/download/wamemory-test.apk \
 
 ## D) Telefonda
 
-1. Brauzer: `http://13.140.202.159:8090/download/wamemory-test.apk`
-2. O‘rnat (Unknown sources).
-3. Och → Settings → **Setup guide / Инструкция** (qadam-baqadam).
-4. Settings → **Notification access** yoq (Path A).
-5. Settings → **Linked devices** — API: `http://13.140.202.159:8090/api`.
-6. Path B: telefon raqam + QR / pairing (ban risk).
+1. Brauzer: `http://13.140.202.159:8090/download/wamemory-test.apk`  
+   (release ~35MB; eski 140MB debug ko‘pincha yarim yuklanib **Parse error** berardi)
+2. Yuklash **tugaguncha** kut — Files/Downloads da hajm ~35MB bo‘lishi kerak.
+3. O‘rnat (Unknown sources). Eski `com.wamemory.app` bo‘lsa — o‘chirib qayta o‘rnat.
+4. Och → Settings → **Setup guide / Инструкция** (qadam-baqadam).
+5. Settings → **Notification access** yoq (Path A).
+6. Settings → **Linked devices** — API: `http://13.140.202.159:8090/api`.
+7. Path B: telefon raqam + QR / pairing (ban risk).
 
 Vizual qo‘llanma (brauzer): `docs/SETUP_GUIDE_VISUAL.html`  
 (`open docs/SETUP_GUIDE_VISUAL.html`)

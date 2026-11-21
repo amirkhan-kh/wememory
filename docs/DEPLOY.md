@@ -7,7 +7,7 @@ To‘liq: **`docs/PHONE_INSTALL.md`** · Contabo: **`docs/CONTABO_DEPLOY.md`**
 | | |
 |--|--|
 | API | `http://13.140.202.159:8090/api` |
-| APK | `http://13.140.202.159:8090/download/wamemory-test.apk` |
+| APK | `http://13.140.202.159:8090/download/wamemory-test.apk` (~35MB release; `./scripts/build-apk.sh`) |
 | Repo | `https://github.com/amirkhan-kh/wememory-mobile` |
 
 ```bash

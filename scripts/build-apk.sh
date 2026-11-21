@@ -40,7 +40,8 @@ if [[ ! -f android/app/build.gradle && ! -f android/app/build.gradle.kts ]]; the
   exit 1
 fi
 
-# Prefer debug APK for owner test (faster, no signing hassle); RELEASE=1 for release
+# Default RELEASE — debug APK is ~140MB and often truncates on phone → "Parse error".
+# Debug override: DEBUG=1 ./scripts/build-apk.sh
 flutter pub get
 
 # Contabo download APK must hit the public demo API (not Mac LAN / emulator).
@@ -50,12 +51,15 @@ API_BASE="${WAMEMORY_API_BASE:-http://13.140.202.159:8090/api}"
 echo "WAMEMORY_API_BASE=$API_BASE"
 DART_DEFINES=(--dart-define="WAMEMORY_API_BASE=$API_BASE")
 
-if [[ "${RELEASE:-0}" == "1" ]]; then
-  flutter build apk --release "${DART_DEFINES[@]}"
-  APK_SRC="$APP/build/app/outputs/flutter-apk/app-release.apk"
-else
-  flutter build apk --debug "${DART_DEFINES[@]}"
+# Phone ABIs only (skip x86_64) → smaller download, fewer truncated installs.
+PLATFORMS=(--target-platform=android-arm,android-arm64)
+
+if [[ "${DEBUG:-0}" == "1" ]]; then
+  flutter build apk --debug "${PLATFORMS[@]}" "${DART_DEFINES[@]}"
   APK_SRC="$APP/build/app/outputs/flutter-apk/app-debug.apk"
+else
+  flutter build apk --release "${PLATFORMS[@]}" "${DART_DEFINES[@]}"
+  APK_SRC="$APP/build/app/outputs/flutter-apk/app-release.apk"
 fi
 
 mkdir -p "$OUT_DIR"
@@ -70,10 +74,50 @@ if ! grep -Fq "lib/arm64-v8a/libflutter.so" <<<"$_apk_listing"; then
 fi
 unset _apk_listing
 
+# Refuse oversized sideload APKs (debug bloat / bad strip) — phones truncate → parse failed.
+_apk_bytes="$(wc -c <"$APK_SRC" | tr -d ' ')"
+_max_bytes=$((80 * 1024 * 1024))
+if [[ "$_apk_bytes" -gt "$_max_bytes" ]]; then
+  echo "ERROR: $APK_SRC is ${_apk_bytes} bytes (>80MB). Use release build (default); DEBUG=1 is for USB only."
+  exit 1
+fi
+unset _apk_bytes _max_bytes
+
 cp "$APK_SRC" "$OUT_DIR/wamemory-test.apk"
+
+# Ensure v1+v2(+v3) for OEM sideload parsers (AGP may skip v1 when minSdk>=24).
+_apksigner=""
+for _bt in "$HOME/Library/Android/sdk/build-tools"/*; do
+  if [[ -x "$_bt/apksigner" ]]; then _apksigner="$_bt/apksigner"; fi
+done
+_debug_ks="${HOME}/.android/debug.keystore"
+if [[ -n "$_apksigner" && -f "$_debug_ks" ]]; then
+  _tmp_unsigned="$(mktemp /tmp/wamemory-unsigned.XXXXXX.apk)"
+  cp "$OUT_DIR/wamemory-test.apk" "$_tmp_unsigned"
+  zip -q -d "$_tmp_unsigned" 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.MF' 2>/dev/null || true
+  "$_apksigner" sign \
+    --ks "$_debug_ks" \
+    --ks-pass pass:android \
+    --key-pass pass:android \
+    --min-sdk-version 21 \
+    --v1-signing-enabled true \
+    --v2-signing-enabled true \
+    --v3-signing-enabled true \
+    --out "$OUT_DIR/wamemory-test.apk" \
+    "$_tmp_unsigned"
+  rm -f "$_tmp_unsigned"
+  "$_apksigner" verify --print-certs "$OUT_DIR/wamemory-test.apk" >/dev/null
+  echo "Signed with apksigner (v1+v2+v3)"
+fi
+unset _apksigner _bt _debug_ks _tmp_unsigned
+
+(
+  cd "$OUT_DIR"
+  shasum -a 256 wamemory-test.apk | tee wamemory-test.apk.sha256
+)
 ls -lh "$OUT_DIR/wamemory-test.apk"
 echo ""
 echo "APK ready for Contabo:"
 echo "  $OUT_DIR/wamemory-test.apk"
 echo "Upload:"
-echo "  ./scripts/deploy-contabo.sh user@YOUR_SERVER_IP"
+echo "  rsync -az deploy/web/download/wamemory-test.apk* adminamirdev@13.140.202.159:projects/wememory-mobile/deploy/web/download/"

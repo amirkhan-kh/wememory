@@ -70,11 +70,16 @@
       fetch('/download/wamemory-test.apk', { method: 'HEAD' })
     ]).then(([api, apk]) => {
       const apiOk = api.status === 'fulfilled' && api.value && api.value.ok;
-      const apkOk = apk.status === 'fulfilled' && apk.value.ok;
+      const apkRes = apk.status === 'fulfilled' ? apk.value : null;
+      const apkOk = !!(apkRes && apkRes.ok);
+      const bytes = apkRes && Number(apkRes.headers.get('content-length') || 0);
+      const size = bytes ? (bytes / (1024 * 1024)).toFixed(0) + 'MB' : '';
       status.innerHTML =
         (apiOk ? '<span class="ok">API online</span>' : '<span class="err">API offline</span>') +
         ' · ' +
-        (apkOk ? '<span class="ok">APK ready</span>' : '<span class="err">APK not uploaded yet</span>');
+        (apkOk
+          ? '<span class="ok">APK ready' + (size ? ' · ' + size : '') + '</span>'
+          : '<span class="err">APK not uploaded yet</span>');
     });
   </script>
 </body>

@@ -31,6 +31,14 @@ android {
         versionName = flutter.versionName
     }
 
+    // AGP may omit v1 when minSdk>=24; some OEM sideload parsers then show "Parse error".
+    signingConfigs {
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
